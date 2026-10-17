@@ -7,18 +7,18 @@
         /* ===================================================================
            1. UI/UX & Layout Styles
            =================================================================== */
-           
-        body { 
-            background-color: #020202; 
-            color: #e0e0e0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-            font-family: 'Consolas', 'Monaco', 'Hiragino Kaku Gothic ProN', sans-serif; 
-            overflow: hidden; 
+
+        body {
+            background-color: #020202;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', 'Hiragino Kaku Gothic ProN', sans-serif;
+            overflow: hidden;
             user-select: none;
         }
 
@@ -27,12 +27,13 @@
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
 
-        #ui-panel { 
-            width: 700px; 
-            display: flex; 
-            justify-content: space-between; 
+        #ui-panel {
+            width: 700px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px; 
+            gap: 16px;
+            margin-bottom: 6px;
             background: linear-gradient(180deg, #222, #111);
             padding: 10px 20px;
             border: 3px solid #444;
@@ -40,24 +41,34 @@
             box-sizing: border-box;
         }
 
-        .stats-group { display: flex; flex-direction: column; width: 220px; }
+        .stats-group { display: flex; flex-direction: column; width: 200px; }
         .stats-label { font-size: 12px; margin-bottom: 4px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
-        
-        #hp-bar-outer { width: 100%; height: 14px; background: #300; border: 1px solid #555; border-radius: 2px; position: relative; }
+
+        .bar-outer { width: 100%; height: 14px; border: 1px solid #555; border-radius: 2px; position: relative; }
+        #hp-bar-outer { background: #300; }
         #hp-bar-inner { width: 100%; height: 100%; background: linear-gradient(90deg, #a00, #f22); transition: width 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-        #hp-text { position: absolute; width: 100%; text-align: center; font-size: 10px; line-height: 14px; color: #fff; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+        #exp-bar-outer { background: #112; }
+        #exp-bar-inner { width: 0%; height: 100%; background: linear-gradient(90deg, #036, #29f); transition: width 0.3s; }
+        .bar-text { position: absolute; top: 0; width: 100%; text-align: center; font-size: 10px; line-height: 14px; color: #fff; font-weight: bold; text-shadow: 1px 1px 2px #000; }
 
         .currency-group { display: flex; gap: 15px; }
         .currency-unit { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 18px; color: #ffd700; }
         .currency-img { width: 24px; height: 24px; image-rendering: pixelated; }
 
-        #viewport { 
-            width: 640px; 
-            height: 640px; 
-            overflow: hidden; 
-            border: 8px solid #2c2c2c; 
-            position: relative; 
-            background: #111; 
+        #sub-panel {
+            width: 700px; box-sizing: border-box; display: flex; justify-content: space-between;
+            font-size: 13px; color: #bbb; padding: 0 6px 6px;
+        }
+        #sub-panel b { color: #fff; }
+        #quest-text { color: #ffcc66; }
+
+        #viewport {
+            width: 640px;
+            height: 640px;
+            overflow: hidden;
+            border: 8px solid #2c2c2c;
+            position: relative;
+            background: #111;
             border-radius: 4px;
         }
 
@@ -70,44 +81,69 @@
             transition: background 0.3s;
         }
 
-        #message-log { 
-            margin-top: 10px; padding: 10px; border: 2px solid #555; 
-            width: 680px; background: rgba(20, 20, 20, 0.9); min-height: 30px; 
+        #save-indicator {
+            position: absolute; top: 8px; right: 10px; z-index: 200;
+            font-size: 12px; color: #8f8; background: rgba(0,0,0,0.6);
+            padding: 3px 8px; border-radius: 4px; opacity: 0; transition: opacity 0.4s;
+            pointer-events: none;
+        }
+
+        #message-log {
+            margin-top: 10px; padding: 10px; border: 2px solid #555;
+            width: 680px; background: rgba(20, 20, 20, 0.9); min-height: 30px;
             font-size: 14px; text-align: center; color: #00ffcc;
             border-radius: 4px; box-shadow: inset 0 0 10px #000;
+            box-sizing: border-box;
         }
 
         /* Modals */
-        .modal { 
+        .modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 380px; background: rgba(10, 10, 10, 0.95); 
-            border: 4px double #ffd700; display: none; 
-            flex-direction: column; padding: 25px; z-index: 500;
+            width: 400px; max-height: 560px; overflow-y: auto;
+            background: rgba(10, 10, 10, 0.95);
+            border: 4px double #ffd700; display: none;
+            flex-direction: column; padding: 22px; z-index: 500;
             box-shadow: 0 0 30px rgba(0,0,0,1);
             border-radius: 10px;
         }
 
-        .modal-header { text-align: center; color: #ffd700; margin-bottom: 20px; font-size: 22px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .modal-header { text-align: center; color: #ffd700; margin-bottom: 16px; font-size: 22px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .modal-section { color: #ffd700; font-size: 13px; margin: 14px 0 4px; border-bottom: 1px dashed #444; padding-bottom: 3px; }
+        .modal-body { font-size: 14px; line-height: 1.7; color: #ddd; }
+        .record-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; color: #ccc; }
 
-        .menu-btn { 
-            margin: 6px 0; padding: 12px; border: 1px solid #444; 
+        .menu-btn {
+            margin: 6px 0; padding: 12px; border: 1px solid #444;
             cursor: pointer; text-align: center; background: #1a1a1a; color: #eee;
             font-weight: bold; font-size: 14px; transition: all 0.2s;
             display: flex; justify-content: space-between; align-items: center;
+            font-family: inherit;
         }
         .menu-btn:hover { background: #333; border-color: #ffd700; color: #fff; transform: scale(1.02); }
         .menu-btn:active { transform: scale(0.98); }
-        
+        .menu-btn.center { justify-content: center; }
+
         .btn-special { border-color: #00ffaa; color: #00ffaa; }
         .btn-special:hover { background: #004433; }
 
-        #death-overlay { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(40, 0, 0, 0.85); display: none; 
-            flex-direction: column; align-items: center; justify-content: center; 
+        #title-screen {
+            position: absolute; inset: 0; z-index: 900;
+            background: radial-gradient(circle at 50% 35%, #1f3a1f, #050805 70%);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #title-screen h1 { color: #ffd700; font-size: 40px; margin: 0 0 6px; text-shadow: 0 4px 0 #000; letter-spacing: 2px; }
+        #title-screen .sub { color: #8c8; margin-bottom: 40px; font-size: 14px; }
+        #title-screen .menu-btn { width: 300px; }
+        #title-save-info { font-size: 12px; color: #999; margin-top: -2px; margin-bottom: 8px; min-height: 16px; }
+
+        #death-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(40, 0, 0, 0.85); display: none;
+            flex-direction: column; align-items: center; justify-content: center;
             z-index: 1000; color: #ff0000; font-size: 50px; text-shadow: 0 0 20px #000;
             font-weight: 900;
         }
+        #death-overlay .note { font-size: 14px; color: #faa; font-weight: normal; margin-top: 16px; }
 
         .info-tip { font-size: 12px; color: #888; margin-top: 15px; text-align: center; }
     </style>
@@ -117,9 +153,16 @@
     <div id="ui-panel">
         <div class="stats-group">
             <div class="stats-label">HP</div>
-            <div id="hp-bar-outer">
+            <div id="hp-bar-outer" class="bar-outer">
                 <div id="hp-bar-inner"></div>
-                <div id="hp-text"><span id="hp-cur">20</span> / <span id="hp-max">20</span></div>
+                <div class="bar-text"><span id="hp-cur">20</span> / <span id="hp-max">20</span></div>
+            </div>
+        </div>
+        <div class="stats-group" style="width:170px">
+            <div class="stats-label">Lv <span id="val-level">1</span></div>
+            <div id="exp-bar-outer" class="bar-outer">
+                <div id="exp-bar-inner"></div>
+                <div class="bar-text" id="exp-text">0 / 10</div>
             </div>
         </div>
         <div class="currency-group">
@@ -134,28 +177,55 @@
         </div>
     </div>
 
+    <div id="sub-panel">
+        <span>攻撃 <b id="val-atk">3</b>　防御 <b id="val-def">0</b>　場所 <b id="val-place">地上</b></span>
+        <span id="quest-text"></span>
+    </div>
+
     <div id="game-container">
         <div id="viewport">
             <div id="fx-layer"></div>
+            <div id="save-indicator">セーブしました</div>
             <canvas id="mainCanvas"></canvas>
-            
+
             <div id="shop-modal" class="modal">
                 <div id="shop-name" class="modal-header">General Store</div>
                 <div id="shop-items"></div>
-                <div class="info-tip">所持金に注意して購入してください。</div>
-                <button class="menu-btn" style="margin-top:20px; border-color:#800;" onclick="closeAllUI()">[ ESC ] 閉じる</button>
+                <div class="info-tip" id="shop-tip">所持金に注意して購入してください。</div>
+                <button class="menu-btn center" style="margin-top:20px; border-color:#800;" onclick="closeAllUI()">[ ESC ] 閉じる</button>
             </div>
 
             <div id="bag-modal" class="modal">
                 <div class="modal-header">Inventory</div>
                 <div id="bag-items"></div>
-                <div class="info-tip">[ E ] キーで開閉できます。</div>
-                <button class="menu-btn" style="margin-top:20px;" onclick="closeAllUI()">閉じる</button>
+                <div class="info-tip">[ E ] キーで開閉 / [ Q ] キーで回復薬をすぐ使う</div>
+                <button class="menu-btn center" style="margin-top:20px;" onclick="closeAllUI()">閉じる</button>
+            </div>
+
+            <div id="floor-modal" class="modal">
+                <div class="modal-header">地下ダンジョン</div>
+                <div id="floor-items"></div>
+                <button class="menu-btn center" style="margin-top:20px; border-color:#800;" onclick="closeAllUI()">やめておく</button>
+            </div>
+
+            <div id="info-modal" class="modal">
+                <div id="info-title" class="modal-header"></div>
+                <div id="info-body" class="modal-body"></div>
+                <button class="menu-btn center" style="margin-top:20px;" id="info-ok">OK</button>
+            </div>
+
+            <div id="title-screen">
+                <h1>Veggie Adventure</h1>
+                <div class="sub">― 野菜の王を倒せ ―</div>
+                <button class="menu-btn center" id="btn-continue" onclick="startGame(false)">つづきから</button>
+                <div id="title-save-info"></div>
+                <button class="menu-btn center" onclick="startGame(true)">はじめから</button>
             </div>
 
             <div id="death-overlay">
                 <div>YOU PERISHED</div>
-                <button class="menu-btn" style="width:200px; margin-top:40px; border-color:#f00;" onclick="location.reload()">TRY AGAIN</button>
+                <div class="note">銅貨の半分を落として、地上で目を覚ます。</div>
+                <button class="menu-btn center" style="width:200px; margin-top:30px; border-color:#f00;" onclick="respawnPlayer()">復活する</button>
             </div>
         </div>
     </div>
@@ -173,12 +243,23 @@
         const VIEW_SIZE = 640;
         const ATTACK_INTERVAL = 400; // ms
         const SPAWN_INTERVAL = 8000; // ms
+        const AUTOSAVE_INTERVAL = 30000; // ms
         const MAP_FILE = 'map.txt';
+        const SAVE_KEY = 'veggie-adventure-save-v1';
+        const FIELD_START = { gx: 5, gy: 5 };
+        const BOSS_EVERY = 5;      // 5階ごとにボス
+        const FINAL_FLOOR = 30;    // 最終ボスの階
+        const DIRS = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+
+        // タイル: 0 草 / 1 岩 / 2 水 / 3 店 / 4 砂 / 5 下り階段 / 6 上り階段 / 7 ダンジョンの床
+        const BLOCKING_TILES = [1, 2, 3];
 
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
         const msgLog = document.getElementById('message-log');
         const fxLayer = document.getElementById('fx-layer');
+        canvas.width = VIEW_SIZE;
+        canvas.height = VIEW_SIZE;
 
         // State Tracking
         let isGameRunning = false;
@@ -187,7 +268,7 @@
         let activeEnemies = [];
         let activeProjectiles = [];
         let floatingLabels = [];
-        let groundTraps = []; 
+        let groundTraps = [];
         let inputKeys = {};
         let lastSpawnTime = 0;
         let isUIOpen = false;
@@ -197,8 +278,14 @@
         let frameCount = 0;
         let gameState = "menu"; // "menu" | "playing"
         let currentMap = 'field'; // 'field' | 'dungeon'
-        let dungeonMap = [];
+        let dungeonFloor = 0;
         let dungeonReturn = null;
+        let fieldTemplate = [];   // map.txt の初期状態（はじめから用）
+        let lastDamageTime = 0;
+        let lastRegenTime = 0;
+        let lastAutoSave = 0;
+        let lastQuestCheck = 0;
+        let lastFrameTime = 0;
 
         /**
          * Player State Object
@@ -214,6 +301,9 @@
             maxHp: 20,
             baseAtk: 3,
             currentAtk: 3,
+            def: 0,
+            level: 1,
+            exp: 0,
             isAlive: true,
             direction: 'down'
         };
@@ -225,12 +315,30 @@
             bronze: 0,
             silver: 0,
             potions: 0,
+            hipotions: 0,
+            elixirs: 0,
             scrolls: 0,
             hasPickel: false,
-            weaponId: 'sw', // 'sw' (wood), 'sw2' (stone), 'sw3' (iron)
+            weaponId: 'sw',
+            armorId: 'none',
+            lifeFruits: 0,
             hasThunderAura: false,
-            lastThunderTime: 0,
-            dungeonChestOpened: false // ダンジョンの宝箱は1回きり
+            lastThunderTime: 0
+        };
+
+        /**
+         * Progress / Records (セーブ対象)
+         */
+        const progress = {
+            deepest: 0,            // 到達した最深階
+            checkpoints: [1],      // ダンジョンを始められる階
+            kills: {},             // 種類ごとの撃破数
+            bossKills: 0,
+            playTimeMs: 0,
+            questIndex: 0,
+            lastLogin: null,       // 'YYYY-MM-DD'
+            loginStreak: 0,
+            gameCleared: false
         };
 
         /**
@@ -247,6 +355,94 @@
         };
 
         const magicTarget = { gx: 0, gy: 0 };
+
+        /**
+         * Equipment Definitions
+         * unlock: お店に並ぶのに必要な最深階
+         */
+        const WEAPON_ORDER = ['sw', 'sw2', 'sw3', 'sw4', 'sw5', 'sw6', 'sw7'];
+        const WEAPONS = {
+            'sw':  { name: '木の剣',       atk: 0 },
+            'sw2': { name: '石の剣',       atk: 1,  b: 20, s: 0,  unlock: 0,  shop: 'basic' },
+            'sw3': { name: '鉄の剣',       atk: 2,  b: 30, s: 0,  unlock: 0,  shop: 'advanced' },
+            'sw4': { name: '鋼の剣',       atk: 3,  b: 50, s: 0,  unlock: 0,  shop: 'advanced' },
+            'sw5': { name: 'ミスリルの剣', atk: 6,  b: 0,  s: 8,  unlock: 10, shop: 'advanced' },
+            'sw6': { name: '炎の剣',       atk: 10, b: 0,  s: 20, unlock: 20, shop: 'advanced' },
+            'sw7': { name: '伝説の包丁',   atk: 15 } // 野菜の王が落とす
+        };
+
+        const ARMOR_ORDER = ['none', 'a1', 'a2', 'a3', 'a4', 'a5'];
+        const ARMORS = {
+            'none': { name: 'なし',         def: 0 },
+            'a1':   { name: '革の鎧',       def: 1, b: 30, s: 0,  unlock: 0,  shop: 'basic' },
+            'a2':   { name: '鉄の鎧',       def: 2, b: 80, s: 0,  unlock: 0,  shop: 'advanced' },
+            'a3':   { name: '鋼の鎧',       def: 4, b: 0,  s: 4,  unlock: 5,  shop: 'advanced' },
+            'a4':   { name: 'ミスリルの鎧', def: 6, b: 0,  s: 10, unlock: 15, shop: 'advanced' },
+            'a5':   { name: '王者の鎧',     def: 9, b: 0,  s: 25, unlock: 25, shop: 'advanced' }
+        };
+
+        const CONSUMABLES = {
+            'potion':   { name: 'ポーション',     heal: 5 },
+            'hipotion': { name: 'ハイポーション', heal: 30 },
+            'elixir':   { name: 'エリクサー',     heal: Infinity }
+        };
+        const CONSUMABLE_KEYS = { 'potion': 'potions', 'hipotion': 'hipotions', 'elixir': 'elixirs' };
+
+        /**
+         * Enemy Definitions
+         */
+        const ENEMY_TYPES = {
+            'eggplant': { name: 'ナス',     hp: 15, atk: 2, cd: 2000, speed: 300, bronze: 3,  exp: 2 },
+            'onion':    { name: 'タマネギ', hp: 25, atk: 1, cd: 4000, speed: 350, bronze: 5,  exp: 3 },
+            'pepper':   { name: 'ピーマン', hp: 12, atk: 2, cd: 1800, speed: 300, bronze: 4,  exp: 3 },
+            'tomato':   { name: 'トマト',   hp: 40, atk: 0, cd: 1000, speed: 150, bronze: 8,  exp: 5 }, // Healer
+            'mushroom': { name: 'キノコ',   hp: 20, atk: 2, cd: 2400, speed: 280, bronze: 6,  exp: 4 },
+            'chili':    { name: '唐辛子',   hp: 45, atk: 5, cd: 1500, speed: 250, bronze: 12, exp: 8 },
+            'burdock':  { name: 'ゴボウ',   hp: 22, atk: 4, cd: 2200, speed: 200, bronze: 7,  exp: 5 }
+        };
+
+        const BOSSES = [
+            { type: 'eggplant', name: '巨大ナス',     hp: 120, atk: 5,  cd: 1400, speed: 350, skills: ['summon'] },
+            { type: 'onion',    name: 'タマネギ将軍', hp: 200, atk: 5,  cd: 1500, speed: 350, skills: ['summon', 'shoot4'] },
+            { type: 'tomato',   name: 'トマト女王',   hp: 260, atk: 6,  cd: 1300, speed: 300, skills: ['heal', 'summon'] },
+            { type: 'burdock',  name: 'ゴボウ魔人',   hp: 320, atk: 8,  cd: 1300, speed: 250, skills: ['line', 'shoot4'] },
+            { type: 'chili',    name: '激辛大王',     hp: 400, atk: 10, cd: 1100, speed: 250, skills: ['shoot4', 'line', 'summon'] },
+            { type: 'eggplant', name: '野菜の王',     hp: 650, atk: 12, cd: 1000, speed: 250, skills: ['shoot4', 'summon', 'heal', 'line'], final: true }
+        ];
+
+        /**
+         * Quests (順番にこなしていく依頼)
+         */
+        const killsOf = type => progress.kills[type] || 0;
+        const totalKills = () => Object.values(progress.kills).reduce((a, b) => a + b, 0);
+        const QUESTS = [
+            { text: 'ナスを5体倒す',               need: 5,    cur: () => killsOf('eggplant'),           reward: { bronze: 20 } },
+            { text: '石の剣を買う（旅の露店）',     need: 1,    cur: () => +(weaponRank() >= 1),          reward: { bronze: 15 } },
+            { text: '革の鎧を買う（旅の露店）',     need: 1,    cur: () => +(armorRank() >= 1),           reward: { potions: 2 } },
+            { text: '地下ダンジョンに入る',         need: 1,    cur: () => Math.min(progress.deepest, 1), reward: { bronze: 30 } },
+            { text: 'Lv5になる',                    need: 5,    cur: () => player.level,                  reward: { silver: 1 } },
+            { text: 'ピーマンを15体倒す',           need: 15,   cur: () => killsOf('pepper'),             reward: { bronze: 40 } },
+            { text: '地下3階に到達する',            need: 3,    cur: () => progress.deepest,              reward: { potions: 3 } },
+            { text: '地下5階のボスを倒す',          need: 6,    cur: () => Math.max(...progress.checkpoints), reward: { silver: 2 } },
+            { text: '鉄の剣を買う（首都）',         need: 1,    cur: () => +(weaponRank() >= 2),          reward: { bronze: 50 } },
+            { text: 'Lv10になる',                   need: 10,   cur: () => player.level,                  reward: { silver: 2 } },
+            { text: 'キノコを20体倒す',             need: 20,   cur: () => killsOf('mushroom'),           reward: { bronze: 80 } },
+            { text: 'つるはしを手に入れる',         need: 1,    cur: () => +inventory.hasPickel,          reward: { hipotions: 2 } },
+            { text: '地下10階のボスを倒す',         need: 11,   cur: () => Math.max(...progress.checkpoints), reward: { silver: 4 } },
+            { text: '鋼の剣を買う',                 need: 1,    cur: () => +(weaponRank() >= 3),          reward: { silver: 2 } },
+            { text: '唐辛子を30体倒す',             need: 30,   cur: () => killsOf('chili'),              reward: { silver: 3 } },
+            { text: 'Lv15になる',                   need: 15,   cur: () => player.level,                  reward: { hipotions: 3 } },
+            { text: '地下15階のボスを倒す',         need: 16,   cur: () => Math.max(...progress.checkpoints), reward: { silver: 6 } },
+            { text: 'ミスリルの剣を買う',           need: 1,    cur: () => +(weaponRank() >= 4),          reward: { elixirs: 1 } },
+            { text: '敵を合計1000体倒す',           need: 1000, cur: () => totalKills(),                  reward: { silver: 8 } },
+            { text: '地下20階のボスを倒す',         need: 21,   cur: () => Math.max(...progress.checkpoints), reward: { silver: 8 } },
+            { text: 'Lv25になる',                   need: 25,   cur: () => player.level,                  reward: { elixirs: 2 } },
+            { text: '地下25階のボスを倒す',         need: 26,   cur: () => Math.max(...progress.checkpoints), reward: { silver: 10 } },
+            { text: '炎の剣を買う',                 need: 1,    cur: () => +(weaponRank() >= 5),          reward: { elixirs: 2 } },
+            { text: '地下30階の「野菜の王」を倒す', need: 1,    cur: () => +progress.gameCleared,         reward: { silver: 20 } },
+            { text: '地下40階に到達する',           need: 40,   cur: () => progress.deepest,              reward: { silver: 30 } },
+            { text: '地下50階に到達する',           need: 50,   cur: () => progress.deepest,              reward: { silver: 50 } }
+        ];
 
         /**
          * Asset Library Definition
@@ -267,7 +463,7 @@
             'onion': 'onion_enemy.png',
             'tomato': 'enemy_tomato.png',
             'pepper': 'enemy_green_pepper.png',
-            'chili': 'enemy_pepper.png', 
+            'chili': 'enemy_pepper.png',
             'mushroom': 'mushroom.png',
             'mushroom_trap': 'mushroom2.png',
             'burdock': 'enemy_burdock.png',
@@ -298,83 +494,405 @@
             try {
                 // Load Map Data
                 await loadMap();
-
-                // Load Images
-                let loadedCount = 0;
-                const totalAssets = Object.keys(ASSETS_MAP).length;
-                
-                for (let key in ASSETS_MAP) {
-                    const img = new Image();
-                    img.onload = () => {
-                        loadedCount++;
-                        if (loadedCount === totalAssets) startGame();
-                    };
-                    img.onerror = () => {
-                        console.error(`Failed to load asset: ${key}`);
-                        loadedCount++;
-                        if (loadedCount === totalAssets) startGame();
-                    };
-                    img.src = ASSETS_MAP[key];
-                    imageLib[key] = img;
-                }
             } catch (err) {
                 logMessage("Error: " + err.message);
                 // Fallback map for local testing if server fails
-                worldMap = Array(20).fill(0).map(() => Array(20).fill(0));
-                startGame();
+                fieldTemplate = Array(20).fill(0).map(() => Array(20).fill(0));
             }
+
+            // Load Images
+            await Promise.all(Object.keys(ASSETS_MAP).map(key => new Promise(resolve => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = () => { console.error(`Failed to load asset: ${key}`); resolve(); };
+                img.src = ASSETS_MAP[key];
+                imageLib[key] = img;
+            })));
+
+            buildImageVariants();
+            showTitle();
         }
 
         async function loadMap() {
             const response = await fetch(MAP_FILE);
             if (!response.ok) throw new Error("Map not found");
             const text = await response.text();
-            worldMap = text.trim().split('\n').map(row => row.trim().split('').map(Number));
-
-            canvas.width = worldMap[0].length * TILE_SIZE;
-            canvas.height = worldMap.length * TILE_SIZE;
+            fieldTemplate = text.trim().split('\n').map(row => row.trim().split('').map(Number));
         }
 
-        async function loadDungeon() {
-            const res = await fetch('dungeon.txt');
-            if (!res.ok) throw new Error("Dungeon not found");
-            const text = await res.text();
-            dungeonMap = text.trim().split('\n').map(r => r.trim().split('').map(Number));
-            worldMap = dungeonMap;
-
-            canvas.width = worldMap[0].length * TILE_SIZE;
-            canvas.height = worldMap.length * TILE_SIZE;
+        /**
+         * 既存の画像に色をつけて、階段・床・上位武器・強敵・ボスの見た目を作る
+         */
+        function makeVariant(img, color, strength, flipY = false) {
+            try {
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth;
+                c.height = img.naturalHeight;
+                const g = c.getContext('2d');
+                if (flipY) { g.translate(0, c.height); g.scale(1, -1); }
+                g.drawImage(img, 0, 0);
+                if (color) {
+                    const data = g.getImageData(0, 0, c.width, c.height);
+                    const px = data.data;
+                    const [cr, cg, cb] = [1, 3, 5].map(i => parseInt(color.substr(i, 2), 16));
+                    for (let i = 0; i < px.length; i += 4) {
+                        const lum = (px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11) / 255;
+                        px[i]     = px[i]     * (1 - strength) + Math.min(255, cr * lum * 1.4) * strength;
+                        px[i + 1] = px[i + 1] * (1 - strength) + Math.min(255, cg * lum * 1.4) * strength;
+                        px[i + 2] = px[i + 2] * (1 - strength) + Math.min(255, cb * lum * 1.4) * strength;
+                    }
+                    g.putImageData(data, 0, 0);
+                }
+                return c;
+            } catch (err) {
+                // file:// で開いた場合など、画像加工できないときは元画像を使う
+                return img;
+            }
         }
 
-        const DUNGEON_SPAWN = { gx: 1, gy: 2 }; // 出口(1,1)のすぐ下
+        function buildImageVariants() {
+            imageLib[6] = makeVariant(imageLib[5], '#7fa8ff', 0.45, true); // 上り階段
+            imageLib[7] = makeVariant(imageLib[4], '#6b6458', 0.85);       // ダンジョンの床
+            imageLib['sw5'] = makeVariant(imageLib['sw4'], '#66ccff', 0.7);
+            imageLib['sw6'] = makeVariant(imageLib['sw4'], '#ff5522', 0.75);
+            imageLib['sw7'] = makeVariant(imageLib['sw4'], '#ffd700', 0.8);
+            for (let type in ENEMY_TYPES) {
+                imageLib[type + '_elite'] = makeVariant(imageLib[type], '#ffd700', 0.45);
+                imageLib[type + '_boss'] = makeVariant(imageLib[type], '#ff3344', 0.35);
+            }
+            imageLib['boss_final'] = makeVariant(imageLib['eggplant'], '#b066ff', 0.55);
+        }
 
-        async function checkTileEvents(gx, gy) {
+        /**
+         * ===================================================================
+         * 3.5 Title / Save & Load
+         * ===================================================================
+         */
+        function readSave() {
+            try {
+                const raw = localStorage.getItem(SAVE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function showTitle() {
+            const save = readSave();
+            const btn = document.getElementById('btn-continue');
+            const info = document.getElementById('title-save-info');
+            if (save) {
+                btn.style.display = 'flex';
+                info.innerText = `Lv${save.player.level}　最深 地下${save.progress.deepest}階　プレイ時間 ${formatTime(save.progress.playTimeMs)}`;
+            } else {
+                btn.style.display = 'none';
+                info.innerText = '';
+            }
+            document.getElementById('title-screen').style.display = 'flex';
+            logMessage("つづきから / はじめから を選んでください。");
+        }
+
+        function startGame(isNew) {
+            const save = readSave();
+            if (isNew && save && !confirm("セーブデータを消して、最初から始めますか？")) return;
+
+            document.getElementById('title-screen').style.display = 'none';
+
+            if (!isNew && save && applySave(save)) {
+                logMessage("おかえりなさい。冒険を再開しよう。");
+            } else {
+                worldMap = fieldTemplate.map(row => row.slice());
+                objectChests = [];
+                for (let i = 0; i < 6; i++) spawnRandomChest();
+                placePlayer(FIELD_START.gx, FIELD_START.gy);
+                recalcStats();
+                player.hp = player.maxHp;
+                logMessage("冒険の始まりだ。WASDで移動、マウスで向きを決めてクリック（またはスペース）で攻撃・調べる。Eでバッグ。");
+            }
+
+            // Initial Enemy Wave
+            for (let i = 0; i < 5; i++) {
+                performSpawnCycle();
+            }
+
+            gameState = "playing";
+            isGameRunning = true;
+            updateUI();
+            applyDailyBonus();
+            saveGame(true);
+            requestAnimationFrame(gameLoop);
+        }
+
+        function buildSaveData() {
+            // ダンジョンの中にいても、地上の状態を保存する
+            const inDungeon = currentMap === 'dungeon' && dungeonReturn;
+            const fieldMap = inDungeon ? dungeonReturn.map : worldMap;
+            const chests = inDungeon ? dungeonReturn.chests : objectChests;
+            const pos = inDungeon ? dungeonReturn : player;
+            return {
+                v: 1,
+                savedAt: Date.now(),
+                player: { level: player.level, exp: player.exp, hp: player.isAlive ? player.hp : player.maxHp, gx: pos.gx, gy: pos.gy },
+                inventory: { ...inventory, lastThunderTime: 0 },
+                progress: progress,
+                field: {
+                    map: fieldMap.map(row => row.join('')),
+                    chests: chests.map(c => ({ x: c.x, y: c.y, isOpen: c.isOpen }))
+                }
+            };
+        }
+
+        function saveGame(silent = false) {
+            if (gameState !== "playing") return;
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveData()));
+                lastAutoSave = performance.now();
+                if (!silent) flashSaveIndicator();
+            } catch (err) {
+                console.error("Save failed", err);
+            }
+        }
+
+        function flashSaveIndicator() {
+            const el = document.getElementById('save-indicator');
+            el.style.opacity = 1;
+            clearTimeout(flashSaveIndicator.timer);
+            flashSaveIndicator.timer = setTimeout(() => { el.style.opacity = 0; }, 1500);
+        }
+
+        function applySave(save) {
+            try {
+                Object.assign(inventory, save.inventory);
+                Object.assign(progress, save.progress);
+                worldMap = save.field.map.map(row => row.split('').map(Number));
+                objectChests = save.field.chests;
+                player.level = save.player.level;
+                player.exp = save.player.exp;
+                recalcStats();
+                player.hp = Math.min(player.maxHp, Math.max(1, save.player.hp));
+                const tile = worldMap[save.player.gy] && worldMap[save.player.gy][save.player.gx];
+                if (tile === undefined || BLOCKING_TILES.includes(tile)) placePlayer(FIELD_START.gx, FIELD_START.gy);
+                else placePlayer(save.player.gx, save.player.gy);
+                return true;
+            } catch (err) {
+                console.error("Load failed", err);
+                return false;
+            }
+        }
+
+        function todayString(offsetDays = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function applyDailyBonus() {
+            const today = todayString();
+            if (progress.lastLogin === today) return;
+            progress.loginStreak = (progress.lastLogin === todayString(-1)) ? progress.loginStreak + 1 : 1;
+            progress.lastLogin = today;
+
+            const day = progress.loginStreak;
+            const bronze = 20 * Math.min(day, 7);
+            inventory.bronze += bronze;
+            let body = `連続 ${day} 日目のログイン！<br>銅貨 ${bronze} 枚を受け取った。`;
+            if (day % 7 === 0) {
+                inventory.silver += 5;
+                inventory.hipotions += 2;
+                body += `<br><span style="color:#ffd700">7日連続ボーナス：銀貨5枚とハイポーション2個！</span>`;
+            } else {
+                body += `<br><span style="color:#888">7日連続で特別なボーナス（あと ${7 - (day % 7)} 日）</span>`;
+            }
+            updateUI();
+            showInfo("ログインボーナス", body);
+        }
+
+        function formatTime(ms) {
+            const m = Math.floor(ms / 60000);
+            return `${Math.floor(m / 60)}時間${String(m % 60).padStart(2, '0')}分`;
+        }
+
+        /**
+         * ===================================================================
+         * 3.6 Dungeon Generation & Map Transitions
+         * ===================================================================
+         */
+        function checkTileEvents(gx, gy) {
             let tile = worldMap[gy][gx];
 
             if (tile === 5 && currentMap === 'field') {
-                // 地上の状態を保存（壊した岩・敵・宝箱を戻ったときに復元する）
-                dungeonReturn = {
-                    gx: player.gx,
-                    gy: player.gy,
-                    map: worldMap,
-                    enemies: activeEnemies,
-                    chests: objectChests,
-                    traps: groundTraps
-                };
-                isUIOpen = true; // 読み込み中は操作を止める
-                await loadDungeon();
-                currentMap = 'dungeon';
-                objectChests = [{ x: 3, y: 4, isOpen: inventory.dungeonChestOpened, isDungeon: true }];
-                activeEnemies = [];
-                activeProjectiles = [];
-                groundTraps = [];
-                placePlayer(DUNGEON_SPAWN.gx, DUNGEON_SPAWN.gy);
-                isUIOpen = false;
-                logMessage("ダンジョンに入った。");
+                dungeonReturn = { gx: player.gx, gy: player.gy };
+                if (progress.checkpoints.length > 1) openFloorSelectUI();
+                else enterDungeon(1);
             }
             else if (tile === 5 && currentMap === 'dungeon') {
+                enterFloor(dungeonFloor + 1);
+            }
+            else if (tile === 6 && currentMap === 'dungeon') {
                 returnFromDungeon();
             }
+        }
+
+        function openFloorSelectUI() {
+            isUIOpen = true;
+            const container = document.getElementById('floor-items');
+            container.innerHTML = "";
+            progress.checkpoints.slice().sort((a, b) => a - b).forEach(f => {
+                const btn = document.createElement('div');
+                btn.className = 'menu-btn';
+                btn.innerHTML = `<span>地下 ${f} 階から</span><span style="color:#777">${f === 1 ? '最初から' : 'ボス撃破済み'}</span>`;
+                btn.onclick = () => { closeAllUI(); enterDungeon(f); };
+                container.appendChild(btn);
+            });
+            document.getElementById('floor-modal').style.display = 'flex';
+        }
+
+        function enterDungeon(floor) {
+            // 地上の状態を保存（壊した岩・敵・宝箱を戻ったときに復元する）
+            dungeonReturn = {
+                gx: player.gx,
+                gy: player.gy,
+                map: worldMap,
+                enemies: activeEnemies,
+                chests: objectChests,
+                traps: groundTraps
+            };
+            currentMap = 'dungeon';
+            enterFloor(floor);
+        }
+
+        function enterFloor(floor) {
+            const isFirstVisit = floor > progress.deepest;
+            const isBossFloor = floor % BOSS_EVERY === 0;
+            const gen = isBossFloor ? generateBossFloor() : generateFloor(floor);
+
+            dungeonFloor = floor;
+            progress.deepest = Math.max(progress.deepest, floor);
+            worldMap = gen.map;
+            activeEnemies = [];
+            activeProjectiles = [];
+            groundTraps = [];
+            objectChests = [];
+            poisonTimer = 0;
+            placePlayer(gen.spawn.x, gen.spawn.y);
+
+            if (isBossFloor) {
+                spawnBoss(floor, gen.bossPos.x, gen.bossPos.y);
+                const boss = activeEnemies[0];
+                logMessage(`地下${floor}階　…強大な気配がする。「${boss.name}」が現れた！`);
+            } else {
+                // 宝箱は初めて来た階にだけ置かれる（入り直して稼げないように）
+                if (isFirstVisit) {
+                    const chestCount = 2 + Math.floor(floor / 5);
+                    for (let i = 0; i < chestCount; i++) {
+                        const c = randomCell(gen.map, [7], gen.spawn, 3);
+                        if (c) objectChests.push({ x: c.x, y: c.y, isOpen: false, isDungeon: true });
+                    }
+                }
+                const initial = Math.min(3 + Math.floor(floor / 2), 12);
+                for (let i = 0; i < initial; i++) performSpawnCycle();
+                logMessage(`地下${floor}階　${isFirstVisit ? '（初到達！）' : ''}下り階段を探そう。上り階段で地上に戻れる。`);
+            }
+
+            lastSpawnTime = performance.now();
+            updateUI();
+            saveGame();
+        }
+
+        function generateFloor(floor) {
+            const size = Math.min(16 + floor, 34);
+            const W = size, H = size;
+            const m = [];
+            for (let y = 0; y < H; y++) {
+                m.push([]);
+                for (let x = 0; x < W; x++) {
+                    m[y].push((x === 0 || y === 0 || x === W - 1 || y === H - 1) ? 2 : 1);
+                }
+            }
+
+            // ランダムウォークで洞窟を掘る（必ずすべてつながる）
+            let cx = W >> 1, cy = H >> 1, carved = 0, guard = 0;
+            const target = Math.floor((W - 2) * (H - 2) * 0.42);
+            while (carved < target && guard++ < 200000) {
+                if (m[cy][cx] === 1) { m[cy][cx] = 7; carved++; }
+                const d = DIRS[Math.floor(Math.random() * 4)];
+                const nx = cx + d.x, ny = cy + d.y;
+                if (nx >= 1 && ny >= 1 && nx < W - 1 && ny < H - 1) { cx = nx; cy = ny; }
+            }
+
+            // 砂地（ゴボウが出る）
+            if (floor >= 4) {
+                const patches = 1 + Math.floor(floor / 6);
+                for (let i = 0; i < patches; i++) {
+                    const c = randomCell(m, [7]);
+                    if (!c) break;
+                    for (let dy = -1; dy <= 1; dy++) for (let dx = -2; dx <= 2; dx++) {
+                        if (m[c.y + dy] && m[c.y + dy][c.x + dx] === 7) m[c.y + dy][c.x + dx] = 4;
+                    }
+                }
+            }
+
+            // 上り階段：行き止まりを優先して置き、その隣から始める
+            const floorCells = [];
+            for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (m[y][x] === 7) floorCells.push({ x, y });
+            const neighbors = c => DIRS.map(d => ({ x: c.x + d.x, y: c.y + d.y })).filter(n => m[n.y][n.x] === 7 || m[n.y][n.x] === 4);
+            const deadEnds = floorCells.filter(c => neighbors(c).length === 1);
+            const pool = deadEnds.length ? deadEnds : floorCells.filter(c => neighbors(c).length > 0);
+            const up = pool[Math.floor(Math.random() * pool.length)];
+            const spawn = neighbors(up)[0];
+            m[up.y][up.x] = 6;
+
+            // 下り階段：スタートから一番遠い場所
+            const dist = bfsDistances(m, spawn);
+            let far = spawn, farD = -1;
+            for (let key in dist) {
+                if (dist[key] > farD) { farD = dist[key]; const [x, y] = key.split(',').map(Number); far = { x, y }; }
+            }
+            m[far.y][far.x] = 5;
+
+            return { map: m, spawn };
+        }
+
+        function generateBossFloor() {
+            const W = 13, H = 13;
+            const m = [];
+            for (let y = 0; y < H; y++) {
+                m.push([]);
+                for (let x = 0; x < W; x++) {
+                    m[y].push((x === 0 || y === 0 || x === W - 1 || y === H - 1) ? 2 : 7);
+                }
+            }
+            [[3, 3], [9, 3], [3, 8], [9, 8]].forEach(([x, y]) => { m[y][x] = 1; });
+            m[11][6] = 6; // 上り階段（逃げ道）
+            return { map: m, spawn: { x: 6, y: 10 }, bossPos: { x: 6, y: 4 } };
+        }
+
+        function bfsDistances(m, start) {
+            const dist = { [start.x + ',' + start.y]: 0 };
+            const queue = [start];
+            while (queue.length) {
+                const c = queue.shift();
+                for (let d of DIRS) {
+                    const nx = c.x + d.x, ny = c.y + d.y, key = nx + ',' + ny;
+                    if (dist[key] !== undefined) continue;
+                    if (m[ny][nx] !== 7 && m[ny][nx] !== 4) continue;
+                    dist[key] = dist[c.x + ',' + c.y] + 1;
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+            return dist;
+        }
+
+        function randomCell(m, tiles, awayFrom = null, minDist = 0) {
+            for (let i = 0; i < 300; i++) {
+                const y = Math.floor(Math.random() * m.length);
+                const x = Math.floor(Math.random() * m[0].length);
+                if (!tiles.includes(m[y][x])) continue;
+                if (awayFrom && Math.abs(awayFrom.x - x) + Math.abs(awayFrom.y - y) < minDist) continue;
+                if (objectChests.some(c => c.x === x && c.y === y)) continue;
+                return { x, y };
+            }
+            return null;
         }
 
         function placePlayer(gx, gy) {
@@ -383,34 +901,9 @@
             player.isMoving = false;
         }
 
-
-        function startGame() {
-            // Initial Chest Spawning
-            for (let i = 0; i < 6; i++) {
-                spawnRandomChest();
-            }
-
-            // Initial Enemy Wave
-            for (let i = 0; i < 5; i++) {
-                performSpawnCycle();
-            }
-
-            isGameRunning = true;
-            updateUI();
-            requestAnimationFrame(gameLoop);
-            logMessage("冒険の始まりだ。WASDで移動、マウスで向きを決めてクリック（またはスペース）で攻撃・調べる。Eでバッグ。");
-        }
-
         function spawnRandomChest() {
-            let placed = false;
-            while (!placed) {
-                let rx = Math.floor(Math.random() * worldMap[0].length);
-                let ry = Math.floor(Math.random() * worldMap.length);
-                if (worldMap[ry][rx] === 0) {
-                    objectChests.push({ x: rx, y: ry, isOpen: false });
-                    placed = true;
-                }
-            }
+            const c = randomCell(worldMap, [0]);
+            if (c) objectChests.push({ x: c.x, y: c.y, isOpen: false });
         }
 
         /**
@@ -421,6 +914,9 @@
         function gameLoop(currentTime) {
             if (!isGameRunning) return;
 
+            if (lastFrameTime) progress.playTimeMs += Math.min(currentTime - lastFrameTime, 1000);
+            lastFrameTime = currentTime;
+
             if (!isUIOpen && player.isAlive) {
                 processPlayerMovement(currentTime);
                 processEnvironment(currentTime);
@@ -430,10 +926,17 @@
                 processAutoActions(currentTime);
             }
 
+            if (currentTime - lastQuestCheck > 1000) {
+                lastQuestCheck = currentTime;
+                checkQuests();
+            }
+            if (currentTime - lastAutoSave > AUTOSAVE_INTERVAL && player.isAlive) {
+                saveGame();
+            }
 
             // Global effects (Labels)
             floatingLabels = floatingLabels.filter(lbl => currentTime - lbl.start < 1200);
-            
+
             frameCount++;
             render();
             requestAnimationFrame(gameLoop);
@@ -454,12 +957,12 @@
 
             // Normal speed vs Poisoned speed
             let duration = (poisonTimer > 0) ? 500 : 200;
-            let progress = Math.min((t - player.animStart) / duration, 1);
-            
-            player.rx = player.sx + (player.tx - player.sx) * progress;
-            player.ry = player.sy + (player.ty - player.sy) * progress;
+            let progressRate = Math.min((t - player.animStart) / duration, 1);
 
-            if (progress >= 1) {
+            player.rx = player.sx + (player.tx - player.sx) * progressRate;
+            player.ry = player.sy + (player.ty - player.sy) * progressRate;
+
+            if (progressRate >= 1) {
                 player.isMoving = false;
                 player.gx = player.tx;
                 player.gy = player.ty;
@@ -481,7 +984,7 @@
 
         function attemptMove(entity, nx, ny, t) {
             if (isTileBlocked(nx, ny, entity)) return false;
-            
+
             entity.sx = entity.gx;
             entity.sy = entity.gy;
             entity.tx = nx;
@@ -494,42 +997,50 @@
         function isTileBlocked(nx, ny, self) {
             // Boundary check
             if (ny < 0 || ny >= worldMap.length || nx < 0 || nx >= worldMap[0].length) return true;
-            
+
             const tileType = worldMap[ny][nx];
-            
+
             // Burdock can only move on Sand (4)
-            if (self && self.type === 'burdock' && tileType !== 4) return true;
-            
+            if (self && self.type === 'burdock' && !self.isBoss && tileType !== 4) return true;
+
             // Wall/Water/Shop collisions
-            if ([1, 2, 3].includes(tileType)) return true;
-            
+            if (BLOCKING_TILES.includes(tileType)) return true;
+
+            // Enemies don't stand on stairs
+            if (self !== player && (tileType === 5 || tileType === 6)) return true;
+
             // Entity collision (Player)
             if (self !== player && player.gx === nx && player.gy === ny) return true;
-            
+
             // Entity collision (Enemies)
             for (let e of activeEnemies) {
                 if (e.isAlive && e !== self) {
                     if ((e.gx === nx && e.gy === ny) || (e.isMoving && e.tx === nx && e.ty === ny)) return true;
                 }
             }
-            
+
             return false;
         }
-                
+
         function returnFromDungeon() {
+            restoreField();
+            logMessage("地上に戻った。");
+            updateUI();
+            saveGame();
+        }
+
+        function restoreField() {
             currentMap = 'field';
-            if (dungeonReturn) {
+            dungeonFloor = 0;
+            if (dungeonReturn && dungeonReturn.map) {
                 worldMap = dungeonReturn.map;
                 activeEnemies = dungeonReturn.enemies;
                 objectChests = dungeonReturn.chests;
                 groundTraps = dungeonReturn.traps;
-                activeProjectiles = [];
-                canvas.width = worldMap[0].length * TILE_SIZE;
-                canvas.height = worldMap.length * TILE_SIZE;
                 placePlayer(dungeonReturn.gx, dungeonReturn.gy);
             }
-
-            logMessage("地上に戻った");
+            activeProjectiles = [];
+            dungeonReturn = null;
         }
 
 
@@ -538,12 +1049,18 @@
          * 6. Enemy AI & Spawning (Special Logic for Swords)
          * ===================================================================
          */
+        function weaponRank() { return WEAPON_ORDER.indexOf(inventory.weaponId); }
+        function armorRank() { return ARMOR_ORDER.indexOf(inventory.armorId); }
+
         function performSpawnCycle() {
-            // Limit based on sword quality
-            let maxCount = 15;
-            if (inventory.weaponId === 'sw2') maxCount = 25;
-            if (inventory.weaponId === 'sw3') maxCount = 40;
-            if (inventory.weaponId === 'sw4') maxCount = 55;
+            let maxCount;
+            if (currentMap === 'dungeon') {
+                if (dungeonFloor % BOSS_EVERY === 0) return; // ボス部屋は召喚のみ
+                maxCount = Math.min(6 + Math.floor(dungeonFloor / 3), 18);
+            } else {
+                // Limit based on sword quality
+                maxCount = [15, 25, 40, 55][Math.min(weaponRank(), 3)];
+            }
 
             if (activeEnemies.filter(e => e.isAlive).length >= maxCount) return;
 
@@ -554,62 +1071,86 @@
         }
 
         function findValidSpawnPoint() {
+            const minDist = currentMap === 'dungeon' ? 6 : 7;
             for (let i = 0; i < 40; i++) {
                 let rx = Math.floor(Math.random() * worldMap[0].length);
                 let ry = Math.floor(Math.random() * worldMap.length);
                 const tile = worldMap[ry][rx];
-                
+
                 // Away from player
                 let dist = Math.abs(player.gx - rx) + Math.abs(player.gy - ry);
-                if ((tile === 0 || tile === 4) && dist > 7) {
+                if ((tile === 0 || tile === 4 || tile === 7) && dist > minDist && !isTileBlocked(rx, ry, null)) {
                     return { x: rx, y: ry };
                 }
             }
             return null;
         }
 
-        function spawnEnemyAt(x, y) {
-            const tile = worldMap[y][x];
-            let type = 'eggplant';
+        function pickEnemyType(tile) {
+            if (tile === 4) return 'burdock';
 
-            if (tile === 4) {
-                type = 'burdock';
+            let pool = ['pepper', 'eggplant', 'onion'];
+            const hasTomato = activeEnemies.some(e => e.isAlive && e.type === 'tomato' && !e.isBoss);
+
+            if (currentMap === 'dungeon') {
+                if (dungeonFloor >= 3) pool.push('mushroom');
+                if (dungeonFloor >= 4 && !hasTomato) pool.push('tomato');
+                if (dungeonFloor >= 7) pool.push('chili', 'chili');
             } else {
-                // IMPORTANT: Conditional unlocks based on weapon
-                let pool = ['pepper', 'eggplant', 'onion'];
-                
                 // Wood Sword (sw) -> ONLY pepper, eggplant, onion (no mushrooms/chili)
-                if (['sw2', 'sw3', 'sw4'].includes(inventory.weaponId)) {
+                if (weaponRank() >= 1) {
                     pool.push('mushroom');
-                    if (!activeEnemies.some(e => e.isAlive && e.type === 'tomato')) {
-                        pool.push('tomato');
-                    }
+                    if (!hasTomato) pool.push('tomato');
                 }
-                
                 // Iron Sword (sw3) -> Unlocks chili
-                if (['sw3', 'sw4'].includes(inventory.weaponId)) {
-                    pool.push('chili');
-                }
-
-                type = pool[Math.floor(Math.random() * pool.length)];
+                if (weaponRank() >= 2) pool.push('chili');
             }
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
 
-            const config = {
-                'eggplant': { hp: 15, atk: 2, cd: 2000, speed: 300 },
-                'onion':    { hp: 25, atk: 1, cd: 4000, speed: 350 },
-                'pepper':   { hp: 12, atk: 2, cd: 1800, speed: 300 },
-                'tomato':   { hp: 40, atk: 0, cd: 1000, speed: 150 }, // Healer
-                'mushroom': { hp: 20, atk: 2, cd: 2400, speed: 280 },
-                'chili':    { hp: 45, atk: 5, cd: 1500, speed: 250 },
-                'burdock':  { hp: 22, atk: 4, cd: 2200, speed: 200 }
-            }[type];
+        function spawnEnemyAt(x, y, forcedType = null) {
+            const type = forcedType || pickEnemyType(worldMap[y][x]);
+            const config = ENEMY_TYPES[type];
+
+            // 深い階ほど強く、報酬も多い
+            const f = currentMap === 'dungeon' ? dungeonFloor : 0;
+            const statScale = f > 0 ? 1 + 0.2 * (f - 1) : 1;
+            const rewardScale = f > 0 ? 1 + 0.3 * (f - 1) : 1;
+            const isElite = f >= 6 && Math.random() < 0.12;
+
+            const hp = Math.round(config.hp * statScale * (isElite ? 2.2 : 1));
+            const atk = config.atk > 0 ? config.atk + Math.floor(f / 3) + (isElite ? 2 : 0) : 0;
 
             activeEnemies.push({
-                type, gx: x, gy: y, rx: x, ry: y, sx: x, sy: y, tx: x, ty: y,
-                hp: config.hp, maxHp: config.hp, atk: config.atk, 
+                type, name: (isElite ? '強い' : '') + config.name,
+                img: isElite ? type + '_elite' : type,
+                gx: x, gy: y, rx: x, ry: y, sx: x, sy: y, tx: x, ty: y,
+                hp, maxHp: hp, atk,
                 actionCd: config.cd, moveDur: config.speed,
-                isAlive: true, isMoving: false, animStart: 0, 
+                bronze: Math.round(config.bronze * rewardScale * (isElite ? 3 : 1)),
+                exp: Math.round(config.exp * rewardScale * (isElite ? 3 : 1)),
+                isElite, isBoss: false,
+                isAlive: true, isMoving: false, animStart: 0,
                 lastAction: performance.now(), stunUntil: 0
+            });
+        }
+
+        function spawnBoss(floor, x, y) {
+            const index = floor / BOSS_EVERY - 1;
+            const def = BOSSES[index % BOSSES.length];
+            const loop = Math.floor(index / BOSSES.length); // 30階より先は強化されて再登場
+            const hp = Math.round(def.hp * (1 + loop * 1.5));
+            activeEnemies.push({
+                type: def.type, name: def.name + (loop > 0 ? ` +${loop}` : ''),
+                img: def.final ? 'boss_final' : def.type + '_boss',
+                gx: x, gy: y, rx: x, ry: y, sx: x, sy: y, tx: x, ty: y,
+                hp, maxHp: hp, atk: def.atk + Math.floor(floor / 3) + loop * 5,
+                actionCd: def.cd, moveDur: def.speed,
+                bronze: def.hp, exp: 40 * floor,
+                skills: def.skills, isFinal: !!def.final && loop === 0,
+                isElite: false, isBoss: true,
+                isAlive: true, isMoving: false, animStart: 0,
+                lastAction: performance.now() + 1500, stunUntil: 0
             });
         }
 
@@ -622,8 +1163,8 @@
                     let p = Math.min((t - e.animStart) / e.moveDur, 1);
                     e.rx = e.sx + (e.tx - e.sx) * p;
                     e.ry = e.sy + (e.ty - e.sy) * p;
-                    if (p >= 1) { 
-                        e.isMoving = false; e.gx = e.tx; e.gy = e.ty; e.lastAction = t; 
+                    if (p >= 1) {
+                        e.isMoving = false; e.gx = e.tx; e.gy = e.ty; e.lastAction = t;
                     }
                 } else {
                     e.rx = e.gx; e.ry = e.gy;
@@ -640,81 +1181,61 @@
             const dy = player.gy - e.gy;
             const dist = Math.abs(dx) + Math.abs(dy);
 
+            if (e.isBoss) {
+                decideBossAction(e, t, dx, dy, dist);
+                return;
+            }
+
             // 1. Tomato: Support AI
-if (e.type === 'tomato') {
+            if (e.type === 'tomato') {
+                // (A) 傷ついた仲間を最優先で探す
+                let injured = activeEnemies.find(o => o.isAlive && o !== e && o.hp < o.maxHp);
 
-    // (A) 傷ついた仲間を最優先で探す
-    let injured = activeEnemies.find(o =>
-        o.isAlive &&
-        o !== e &&
-        o.hp < o.maxHp
-    );
+                if (injured) {
+                    const d = Math.abs(injured.gx - e.gx) + Math.abs(injured.gy - e.gy);
 
-    if (injured) {
-        const d = Math.abs(injured.gx - e.gx) + Math.abs(injured.gy - e.gy);
+                    // 隣接していれば回復
+                    if (d <= 1) {
+                        const heal = Math.max(4, Math.round(injured.maxHp * 0.1));
+                        injured.hp = Math.min(injured.maxHp, injured.hp + heal);
+                        addFloatingLabel("+" + heal, injured.gx, injured.gy, "#0f0");
 
-        // 隣接していれば回復
-        if (d <= 1) {
-    injured.hp = Math.min(injured.maxHp, injured.hp + 4);
-    addFloatingLabel("+4", injured.gx, injured.gy, "#0f0");
+                        // 回復後の硬直（行動ゲージ遅延）
+                        e.lastAction = t + 800;
+                        return;
+                    }
 
-    // 回復後の硬直（行動ゲージ遅延）
-    e.lastAction = t + 800;   // ← 好みで 500～1200ms
+                    // 近づく
+                    moveToTarget(e, injured.gx, injured.gy, t);
+                    return;
+                }
 
-    return;
-}
+                // (B) 回復対象がいない場合：プレイヤーから逃げる
+                let best = null;
+                let maxDist = -1;
+                for (let d of DIRS) {
+                    let nx = e.gx + d.x;
+                    let ny = e.gy + d.y;
+                    if (isTileBlocked(nx, ny, e)) continue;
+                    let away = Math.abs(player.gx - nx) + Math.abs(player.gy - ny);
+                    if (away > maxDist) {
+                        maxDist = away;
+                        best = d;
+                    }
+                }
 
-        // 近づく
-        moveToTarget(e, injured.gx, injured.gy, t);
-        return;
-    }
-
-    // (B) 回復対象がいない場合：プレイヤーから逃げる
-    const dx = e.gx - player.gx;
-    const dy = e.gy - player.gy;
-
-    // プレイヤーから最も遠くなる方向を選ぶ
-    let dirs = [
-        { x: 1, y: 0 },
-        { x: -1, y: 0 },
-        { x: 0, y: 1 },
-        { x: 0, y: -1 }
-    ];
-
-    let best = null;
-    let maxDist = -1;
-
-    for (let d of dirs) {
-        let nx = e.gx + d.x;
-        let ny = e.gy + d.y;
-
-        if (isTileBlocked(nx, ny, e)) continue;
-
-        let dist = Math.abs(player.gx - nx) + Math.abs(player.gy - ny);
-        if (dist > maxDist) {
-            maxDist = dist;
-            best = d;
-        }
-    }
-
-    if (best) {
-        attemptMove(e, e.gx + best.x, e.gy + best.y, t);
-    } else {
-        e.lastAction = t;
-    }
-
-    return;
-}
+                if (best) attemptMove(e, e.gx + best.x, e.gy + best.y, t);
+                else e.lastAction = t;
+                return;
+            }
 
             // 2. Pepper: Shoot seeds at range
             if (e.type === 'pepper' && (dx === 0 || dy === 0) && dist <= 4 && dist >= 1) {
-    e.stunUntil = t + 2000;
-    fireProjectile('seed', e.gx, e.gy, Math.sign(dx), Math.sign(dy), e.atk, t);
-
-    e.lastAction = t; // ★ 追加
-
-    return;
-}
+                e.stunUntil = t + 2000;
+                fireProjectile('seed', e.gx, e.gy, Math.sign(dx), Math.sign(dy), e.atk, t);
+                e.lastAction = t;
+                return;
+            }
 
             // 3. Mushroom: Plant traps
             if (e.type === 'mushroom' && Math.random() < 0.5) {
@@ -726,23 +1247,11 @@ if (e.type === 'tomato') {
 
             // 4. Burdock: Line attack
             if (e.type === 'burdock' && dist === 2 && (dx === 0 || dy === 0)) {
-    fireProjectile(
-        'burdock_atk',
-        e.gx,
-        e.gy,
-        Math.sign(dx),
-        Math.sign(dy),
-        e.atk,
-        t,
-        2,
-        0.003
-    );
-
-    e.stunUntil = t + 2500;
-    e.lastAction = t; // ★ 追加
-
-    return;
-}
+                fireProjectile('burdock_atk', e.gx, e.gy, Math.sign(dx), Math.sign(dy), e.atk, t, 2, 0.003);
+                e.stunUntil = t + 2500;
+                e.lastAction = t;
+                return;
+            }
 
             // Default: Melee or Move
             if (dist === 1) {
@@ -753,8 +1262,56 @@ if (e.type === 'tomato') {
             }
         }
 
+        function decideBossAction(e, t, dx, dy, dist) {
+            e.lastAction = t;
+
+            if (dist === 1) {
+                damagePlayer(e.atk);
+                return;
+            }
+
+            if (Math.random() < 0.55) {
+                const skill = e.skills[Math.floor(Math.random() * e.skills.length)];
+
+                if (skill === 'summon') {
+                    const minions = activeEnemies.filter(o => o.isAlive && !o.isBoss).length;
+                    if (minions < 5) {
+                        let summoned = 0;
+                        for (let d of DIRS) {
+                            if (summoned >= 2) break;
+                            const nx = e.gx + d.x, ny = e.gy + d.y;
+                            if (!isTileBlocked(nx, ny, null)) {
+                                spawnEnemyAt(nx, ny, pickEnemyType(7));
+                                summoned++;
+                            }
+                        }
+                        if (summoned) { logMessage(`${e.name}は仲間を呼んだ！`); return; }
+                    }
+                }
+
+                if (skill === 'shoot4') {
+                    DIRS.forEach(d => fireProjectile('seed', e.gx, e.gy, d.x, d.y, Math.ceil(e.atk * 0.7), t, 6));
+                    return;
+                }
+
+                if (skill === 'heal' && e.hp < e.maxHp * 0.9) {
+                    const heal = Math.round(e.maxHp * 0.08);
+                    e.hp = Math.min(e.maxHp, e.hp + heal);
+                    addFloatingLabel("+" + heal, e.gx, e.gy, "#0f0");
+                    return;
+                }
+
+                if (skill === 'line' && (dx === 0 || dy === 0) && dist <= 4) {
+                    fireProjectile('burdock_atk', e.gx, e.gy, Math.sign(dx), Math.sign(dy), e.atk, t, 4, 0.004);
+                    return;
+                }
+            }
+
+            moveToTarget(e, player.gx, player.gy, t);
+        }
+
         function moveToTarget(e, tx, ty, t) {
-            let dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(() => Math.random() - 0.5);
+            let dirs = DIRS.slice().sort(() => Math.random() - 0.5);
             let best = null;
             let minDist = 999;
 
@@ -775,7 +1332,7 @@ if (e.type === 'tomato') {
          * ===================================================================
          */
         function handlePrimaryAction() {
-            if (isUIOpen || !player.isAlive || player.isMoving) return;
+            if (gameState !== "playing" || isUIOpen || !player.isAlive || player.isMoving) return;
 
             const now = performance.now();
             if (now - lastAttackTime < ATTACK_INTERVAL) return;
@@ -788,7 +1345,8 @@ if (e.type === 'tomato') {
 
             const tx = hitEffect.gridX;
             const ty = hitEffect.gridY;
-            
+            if (!worldMap[ty] || worldMap[ty][tx] === undefined) return;
+
             const targetEnemy = activeEnemies.find(e => e.isAlive && e.gx === tx && e.gy === ty);
             const targetChest = objectChests.find(c => !c.isOpen && c.x === tx && c.y === ty);
             const tileContent = worldMap[ty][tx];
@@ -801,14 +1359,14 @@ if (e.type === 'tomato') {
                 targetEnemy.hp -= dmg;
                 addFloatingLabel("-" + dmg, tx, ty, "#ff5500");
                 if (targetEnemy.hp <= 0) handleEnemyDeath(targetEnemy);
-                
+
                 hitEffect.imageKey = inventory.weaponId;
                 hitEffect.isActive = true;
-            } 
+            }
             // Break Rock
             else if (tileContent === 1) {
                 if (inventory.hasPickel) {
-                    worldMap[ty][tx] = 0;
+                    worldMap[ty][tx] = currentMap === 'dungeon' ? 7 : 0;
                     hitEffect.imageKey = 'pickel';
                     hitEffect.isActive = true;
                     logMessage("Player:岩を砕いたぞ！");
@@ -819,10 +1377,7 @@ if (e.type === 'tomato') {
             // Open Chest
             else if (targetChest) {
                 targetChest.isOpen = true;
-                if (targetChest.isDungeon) inventory.dungeonChestOpened = true;
-                let gain = 5 + Math.floor(Math.random() * 5);
-                inventory.bronze += gain;
-                addFloatingLabel("+" + gain + "B", tx, ty, "#ffd700");
+                openChest(targetChest, tx, ty);
                 updateUI();
             }
             // Enter Shop
@@ -834,28 +1389,183 @@ if (e.type === 'tomato') {
             setTimeout(() => { hitEffect.isActive = false; }, 180);
         }
 
+        function openChest(chest, tx, ty) {
+            if (!chest.isDungeon) {
+                let gain = 5 + Math.floor(Math.random() * 5);
+                inventory.bronze += gain;
+                addFloatingLabel("+" + gain + "B", tx, ty, "#ffd700");
+                return;
+            }
+
+            const f = dungeonFloor;
+            const gain = Math.round((10 + Math.floor(Math.random() * 10)) * (1 + 0.3 * (f - 1)));
+            inventory.bronze += gain;
+            addFloatingLabel("+" + gain + "B", tx, ty, "#ffd700");
+            const found = [`銅貨${gain}枚`];
+
+            if (Math.random() < 0.35) {
+                if (f >= 8) { inventory.hipotions++; found.push('ハイポーション'); }
+                else { inventory.potions++; found.push('ポーション'); }
+            }
+            if (Math.random() < 0.15 + f * 0.005) {
+                inventory.silver++;
+                found.push('銀貨1枚');
+            }
+            logMessage(`宝箱から ${found.join('、')} を手に入れた！`);
+        }
+
         function handleEnemyDeath(e) {
             e.isAlive = false;
-            let b = { 'eggplant': 3, 'onion': 5, 'pepper': 4, 'tomato': 8, 'mushroom': 6, 'chili': 12, 'burdock': 7 }[e.type];
-            inventory.bronze += b;
-            
+            inventory.bronze += e.bronze;
+            progress.kills[e.type] = (progress.kills[e.type] || 0) + 1;
+
             // Silver chance
-            if (e.type === 'tomato' && Math.random() < 0.2) inventory.silver++;
-            if (e.type === 'chili' && Math.random() < 0.4) inventory.silver++;
-            
+            if (currentMap === 'field') {
+                if (e.type === 'tomato' && Math.random() < 0.2) inventory.silver++;
+                if (e.type === 'chili' && Math.random() < 0.4) inventory.silver++;
+            } else if (!e.isBoss) {
+                if (Math.random() < (e.isElite ? 0.3 : 0.03)) {
+                    inventory.silver++;
+                    addFloatingLabel("+1S", e.gx, e.gy, "#ddd");
+                }
+            }
+
+            if (e.isBoss) handleBossDeath(e);
+
+            gainExp(e.exp);
             updateUI();
+        }
+
+        function handleBossDeath(boss) {
+            const floor = dungeonFloor;
+            const firstTime = !progress.checkpoints.includes(floor + 1);
+            progress.bossKills++;
+
+            // 取り巻きも消える
+            activeEnemies.forEach(o => { if (o !== boss) o.isAlive = false; });
+            activeProjectiles = [];
+
+            const silver = firstTime ? 2 + Math.floor(floor / 5) * 2 : 1 + Math.floor(floor / 10);
+            inventory.silver += silver;
+            if (firstTime) progress.checkpoints.push(floor + 1);
+
+            // 下り階段が現れる
+            worldMap[1][6] = 5;
+
+            let body = `${boss.name}を倒した！<br>銀貨 ${silver} 枚と 経験値 ${boss.exp} を手に入れた。`;
+            if (firstTime) body += `<br><br>次からは地上の入口から<b>地下${floor + 1}階</b>に直接行けるようになった。`;
+
+            if (boss.isFinal && !progress.gameCleared) {
+                progress.gameCleared = true;
+                inventory.weaponId = 'sw7';
+                recalcStats();
+                body = `<span style="color:#ffd700; font-size:18px">野菜の王を倒した！</span><br><br>` +
+                       `畑に平和が戻った。王の体から<b>伝説の包丁</b>が現れた！<br>` +
+                       `銀貨 ${silver} 枚と 経験値 ${boss.exp} を手に入れた。<br><br>` +
+                       `この先も深層は続いている。どこまで潜れるか挑戦しよう。`;
+                showInfo("GAME CLEAR", body);
+            } else {
+                showInfo("ボス撃破", body);
+            }
+            logMessage("奥に下り階段が現れた。");
+            saveGame();
         }
 
         function damagePlayer(val) {
             if (val <= 0) return;
-            player.hp = Math.max(0, player.hp - val);
-            addFloatingLabel("-" + val, player.gx, player.gy, "#f00");
+            const dmg = Math.max(1, val - player.def);
+            player.hp = Math.max(0, player.hp - dmg);
+            lastDamageTime = performance.now();
+            addFloatingLabel("-" + dmg, player.gx, player.gy, "#f00");
             updateUI();
-            
+
             if (player.hp <= 0) {
                 player.isAlive = false;
+                // 倒れた時点で銅貨を失う（リロードで回避できないように即セーブ）
+                deathLoss = Math.floor(inventory.bronze / 2);
+                inventory.bronze -= deathLoss;
+                updateUI();
+                saveGame(true);
                 document.getElementById('death-overlay').style.display = 'flex';
             }
+        }
+
+        let deathLoss = 0;
+
+        function respawnPlayer() {
+            const lost = deathLoss;
+            if (currentMap === 'dungeon') restoreField();
+            placePlayer(FIELD_START.gx, FIELD_START.gy);
+            // 復活地点のそばの敵は追い払う
+            activeEnemies.forEach(e => {
+                if (Math.abs(e.gx - player.gx) + Math.abs(e.gy - player.gy) <= 3) e.isAlive = false;
+            });
+            activeProjectiles = [];
+            groundTraps = [];
+            poisonTimer = 0;
+            player.hp = player.maxHp;
+            player.isAlive = true;
+            document.getElementById('death-overlay').style.display = 'none';
+            logMessage(`目を覚ました…。銅貨を ${lost} 枚落としてしまった。`);
+            updateUI();
+            saveGame();
+        }
+
+        /**
+         * ===================================================================
+         * 7.5 Level & Stats
+         * ===================================================================
+         */
+        function expToNext(level) {
+            return Math.floor(10 * Math.pow(level, 1.7));
+        }
+
+        function recalcStats() {
+            player.maxHp = 20 + (player.level - 1) * 3 + inventory.lifeFruits * 5;
+            player.currentAtk = 2 + player.level + WEAPONS[inventory.weaponId].atk;
+            player.def = ARMORS[inventory.armorId].def;
+            player.hp = Math.min(player.hp, player.maxHp);
+        }
+
+        function gainExp(amount) {
+            player.exp += amount;
+            let leveled = false;
+            while (player.exp >= expToNext(player.level)) {
+                player.exp -= expToNext(player.level);
+                player.level++;
+                leveled = true;
+            }
+            if (leveled) {
+                recalcStats();
+                player.hp = player.maxHp;
+                addFloatingLabel("LEVEL UP!", player.gx - 0.5, player.gy - 0.3, "#ffd700");
+                logMessage(`レベルが ${player.level} に上がった！ HPが全回復した。`);
+                saveGame();
+            }
+        }
+
+        /**
+         * ===================================================================
+         * 7.6 Quests
+         * ===================================================================
+         */
+        function checkQuests() {
+            if (gameState !== "playing") return;
+            const q = QUESTS[progress.questIndex];
+            if (!q) return;
+            if (q.cur() >= q.need) {
+                const r = q.reward;
+                const parts = [];
+                if (r.bronze) { inventory.bronze += r.bronze; parts.push(`銅貨${r.bronze}枚`); }
+                if (r.silver) { inventory.silver += r.silver; parts.push(`銀貨${r.silver}枚`); }
+                if (r.potions) { inventory.potions += r.potions; parts.push(`ポーション${r.potions}個`); }
+                if (r.hipotions) { inventory.hipotions += r.hipotions; parts.push(`ハイポーション${r.hipotions}個`); }
+                if (r.elixirs) { inventory.elixirs += r.elixirs; parts.push(`エリクサー${r.elixirs}個`); }
+                progress.questIndex++;
+                logMessage(`依頼達成「${q.text}」 報酬：${parts.join('、')}`);
+                saveGame();
+            }
+            updateUI();
         }
 
         /**
@@ -901,7 +1611,7 @@ if (e.type === 'tomato') {
             for (let i = groundTraps.length - 1; i >= 0; i--) {
                 let tr = groundTraps[i];
                 if (t - tr.start > 8000) { groundTraps.splice(i, 1); continue; }
-                
+
                 if (player.gx === tr.x && player.gy === tr.y) {
                     poisonTimer = 300; // frames
                     groundTraps.splice(i, 1);
@@ -918,6 +1628,14 @@ if (e.type === 'tomato') {
                 fxLayer.style.background = 'none';
             }
 
+            // しばらく攻撃を受けなければHPが少しずつ回復する
+            const regenInterval = currentMap === 'dungeon' ? 2500 : 1000;
+            if (t - lastDamageTime > 5000 && t - lastRegenTime > regenInterval && player.hp < player.maxHp) {
+                lastRegenTime = t;
+                player.hp++;
+                updateUI();
+            }
+
             if (t - lastSpawnTime > SPAWN_INTERVAL) {
                 performSpawnCycle();
                 lastSpawnTime = t;
@@ -929,54 +1647,40 @@ if (e.type === 'tomato') {
             let dx = cursorX - (VIEW_SIZE/2);
             let dy = cursorY - (VIEW_SIZE/2);
             let vx, vy;
-            
+
             if (Math.abs(dx) > Math.abs(dy)) {
                 vx = dx > 0 ? 1 : -1; vy = 0;
             } else {
                 vy = dy > 0 ? 1 : -1; vx = 0;
             }
-            
+
             hitEffect.vectorX = vx;
             hitEffect.vectorY = vy;
             hitEffect.gridX = player.gx + vx;
             hitEffect.gridY = player.gy + vy;
-            
+
             magicTarget.gx = player.gx + vx * 3;
             magicTarget.gy = player.gy + vy * 3;
 
-            if (inventory.hasThunderAura) {
-    if (t - inventory.lastThunderTime >= 5000) {
-        inventory.lastThunderTime = t;
+            if (inventory.hasThunderAura && t - inventory.lastThunderTime >= 5000) {
+                inventory.lastThunderTime = t;
 
-        const dmg = Math.max(1, player.currentAtk - 2);
+                const dmg = Math.max(1, player.currentAtk - 2);
 
-        activeEnemies.forEach(e => {
-            if (!e.isAlive) return;
+                activeEnemies.forEach(e => {
+                    if (!e.isAlive) return;
 
-            const dx = Math.abs(e.gx - player.gx);
-const dy = Math.abs(e.gy - player.gy);
+                    const dx = Math.abs(e.gx - player.gx);
+                    const dy = Math.abs(e.gy - player.gy);
 
-if (dx <= 1 && dy <= 1) {
-    e.hp -= dmg;
-    addFloatingLabel("-" + dmg, e.gx, e.gy, "#7cf");
-
-    activeProjectiles.push({
-        type: 'lightning',
-        x: e.gx,
-        y: e.gy,
-        rx: e.gx,
-        ry: e.gy,
-        start: t
-    });
-
-    if (e.hp <= 0) {
-        handleEnemyDeath(e);
-    }
-}
-
-        });
-    }
-}
+                    if (dx <= 1 && dy <= 1) {
+                        e.hp -= dmg;
+                        addFloatingLabel("-" + dmg, e.gx, e.gy, "#7cf");
+                        activeProjectiles.push({ type: 'lightning', x: e.gx, y: e.gy, rx: e.gx, ry: e.gy, start: t });
+                        if (e.hp <= 0) handleEnemyDeath(e);
+                    }
+                });
+            }
         }
 
         /**
@@ -990,6 +1694,20 @@ if (dx <= 1 && dy <= 1) {
             document.getElementById('hp-bar-inner').style.width = (player.hp / player.maxHp * 100) + "%";
             document.getElementById('val-bronze').innerText = inventory.bronze;
             document.getElementById('val-silver').innerText = inventory.silver;
+
+            const need = expToNext(player.level);
+            document.getElementById('val-level').innerText = player.level;
+            document.getElementById('exp-text').innerText = `${player.exp} / ${need}`;
+            document.getElementById('exp-bar-inner').style.width = (player.exp / need * 100) + "%";
+
+            document.getElementById('val-atk').innerText = player.currentAtk;
+            document.getElementById('val-def').innerText = player.def;
+            document.getElementById('val-place').innerText = currentMap === 'dungeon' ? `地下${dungeonFloor}階` : '地上';
+
+            const q = QUESTS[progress.questIndex];
+            document.getElementById('quest-text').innerText = q
+                ? `依頼：${q.text}（${Math.min(q.cur(), q.need)}/${q.need}）`
+                : '依頼：すべて達成！';
         }
 
         function logMessage(txt) {
@@ -1000,180 +1718,224 @@ if (dx <= 1 && dy <= 1) {
             floatingLabels.push({ text, x, y, start: performance.now(), color });
         }
 
-        function openShopUI(shopGridX) {
-    isUIOpen = true;
-
-    const modal = document.getElementById('shop-modal');
-    const container = document.getElementById('shop-items');
-    const title = document.getElementById('shop-name');
-
-    container.innerHTML = "";
-
-    let isAdvanced = shopGridX > 15;
-    title.innerText = isAdvanced ? "首都の大売出し" : "旅の露店";
-
-    modal.style.display = 'flex';
-
-    let catalogue = [
-        { id: 'potion', name: 'ポーション', b: 15, s: 0, desc: 'HPを5回復' }
-    ];
-
-    if (!isAdvanced) {
-        if (inventory.weaponId === 'sw') {
-            catalogue.push({ id: 'sw2', name: '石の剣', b: 20, s: 0, desc: '攻撃力が4に強化' });
+        function showInfo(title, html) {
+            isUIOpen = true;
+            document.getElementById('info-title').innerText = title;
+            document.getElementById('info-body').innerHTML = html;
+            document.getElementById('info-modal').style.display = 'flex';
+            document.getElementById('info-ok').onclick = closeAllUI;
         }
-    } else {
-    if (inventory.weaponId === 'sw2') {
-        catalogue.push({
-            id: 'sw3',
-            name: '鉄の剣',
-            b: 30,
-            s: 0,
-            desc: '攻撃力が5に強化'
-        });
-    }
 
-    // ★ ここを追加するだけ
-    if (inventory.weaponId === 'sw3') {
-        catalogue.push({
-            id: 'sw4',
-            name: '鋼の剣',
-            b: 50,
-            s: 0,
-            desc: '攻撃力が6に強化'
-        });
-    }
+        function getCatalogue(isAdvanced) {
+            const list = [];
+            const shopType = isAdvanced ? 'advanced' : 'basic';
+            const deepest = progress.deepest;
+            let nextUnlock = null;
 
-    if (!inventory.hasPickel) {
-        catalogue.push({
-            id: 'pickel',
-            name: 'つるはし',
-            b: 0,
-            s: 3,
-            desc: '岩を壊せる'
-        });
-    }
-
-    if (!inventory.hasThunderAura) {
-        catalogue.push({
-            id: 'thunderAura',
-            name: '雷の術（常時）',
-            b: 0,
-            s: 4,
-            desc: '5秒毎に周囲4マスへ雷を落とす'
-        });
-    }
-}
-
-    catalogue.forEach(item => {
-        const btn = document.createElement('div');
-        btn.className = 'menu-btn';
-        const priceTxt = item.s > 0 ? `銀 ${item.s}` : `銅 ${item.b}`;
-        btn.innerHTML = `<span>${item.name} <small style="color:#777">(${item.desc})</small></span><span>${priceTxt}</span>`;
-
-        btn.onclick = () => {
-            const canBuy = item.s > 0 ? inventory.silver >= item.s : inventory.bronze >= item.b;
-            if (!canBuy) {
-                logMessage("商人:貨幣のないやつは帰りな。");
-                return;
+            list.push({ id: 'potion', name: 'ポーション', b: 15, s: 0, desc: 'HPを5回復' });
+            if (isAdvanced) {
+                list.push({ id: 'hipotion', name: 'ハイポーション', b: 60, s: 0, desc: 'HPを30回復' });
+                if (deepest >= 10) list.push({ id: 'elixir', name: 'エリクサー', b: 0, s: 3, desc: 'HPを全回復' });
+                else nextUnlock = 10;
             }
-            if (item.s > 0) inventory.silver -= item.s;
-            else inventory.bronze -= item.b;
 
-            applyPurchase(item.id);
-            openShopUI(shopGridX);
-        };
+            // 今の装備の1つ上だけを並べる
+            const offerNext = (order, defs, rank, label, stat) => {
+                const nextId = order[rank + 1];
+                const def = defs[nextId];
+                if (!def || def.shop !== shopType) return;
+                if (deepest < def.unlock) {
+                    nextUnlock = nextUnlock === null ? def.unlock : Math.min(nextUnlock, def.unlock);
+                    return;
+                }
+                const cur = defs[order[rank]][stat];
+                list.push({ id: nextId, name: def.name, b: def.b, s: def.s, desc: `${label} ${cur} → ${def[stat]}` });
+            };
+            offerNext(WEAPON_ORDER, WEAPONS, weaponRank(), '武器の攻撃力', 'atk');
+            offerNext(ARMOR_ORDER, ARMORS, armorRank(), '防御力', 'def');
 
-        container.appendChild(btn);
-    });
-
-    if (isAdvanced) {
-        const exchange = document.createElement('div');
-        exchange.className = 'menu-btn btn-special';
-        exchange.innerHTML = `<span>銅貨の両替</span><span>銅貨50 → 銀貨1</span>`;
-        exchange.onclick = () => {
-            if (inventory.bronze >= 50) {
-                inventory.bronze -= 50;
-                inventory.silver += 1;
-                updateUI();
-                openShopUI(shopGridX);
-            } else {
-                logMessage("商人:貨幣が足りないぞ。");
+            if (isAdvanced) {
+                if (!inventory.hasPickel) list.push({ id: 'pickel', name: 'つるはし', b: 0, s: 3, desc: '岩を壊せる' });
+                if (!inventory.hasThunderAura) list.push({ id: 'thunderAura', name: '雷の術（常時）', b: 0, s: 4, desc: '5秒毎に周囲8マスへ雷を落とす' });
+                if (inventory.lifeFruits < 10) list.push({ id: 'lifeFruit', name: '命の実', b: 0, s: 5, desc: `最大HP+5（残り${10 - inventory.lifeFruits}個）` });
             }
-        };
-        container.appendChild(exchange);
-    }
-}
+            return { list, nextUnlock };
+        }
+
+        function openShopUI(shopGridX) {
+            isUIOpen = true;
+
+            const modal = document.getElementById('shop-modal');
+            const container = document.getElementById('shop-items');
+            const title = document.getElementById('shop-name');
+            const tip = document.getElementById('shop-tip');
+
+            container.innerHTML = "";
+
+            let isAdvanced = shopGridX > 15;
+            title.innerText = isAdvanced ? "首都の大売出し" : "旅の露店";
+
+            modal.style.display = 'flex';
+
+            const { list, nextUnlock } = getCatalogue(isAdvanced);
+            tip.innerText = nextUnlock !== null
+                ? `地下${nextUnlock}階まで潜ると、新しい品が入荷するらしい。`
+                : (isAdvanced ? "所持金に注意して購入してください。" : "首都（東の店）ではもっと良い品が手に入る。");
+
+            list.forEach(item => {
+                const btn = document.createElement('div');
+                btn.className = 'menu-btn';
+                const priceTxt = item.s > 0 ? `銀 ${item.s}` : `銅 ${item.b}`;
+                btn.innerHTML = `<span>${item.name} <small style="color:#777">(${item.desc})</small></span><span>${priceTxt}</span>`;
+
+                btn.onclick = () => {
+                    const canBuy = item.s > 0 ? inventory.silver >= item.s : inventory.bronze >= item.b;
+                    if (!canBuy) {
+                        logMessage("商人:貨幣のないやつは帰りな。");
+                        return;
+                    }
+                    if (item.s > 0) inventory.silver -= item.s;
+                    else inventory.bronze -= item.b;
+
+                    applyPurchase(item.id);
+                    logMessage(`${item.name} を買った。`);
+                    openShopUI(shopGridX);
+                };
+
+                container.appendChild(btn);
+            });
+
+            if (isAdvanced) {
+                const exchange = document.createElement('div');
+                exchange.className = 'menu-btn btn-special';
+                exchange.innerHTML = `<span>銅貨の両替</span><span>銅貨50 → 銀貨1</span>`;
+                exchange.onclick = () => {
+                    if (inventory.bronze >= 50) {
+                        inventory.bronze -= 50;
+                        inventory.silver += 1;
+                        updateUI();
+                        saveGame(true);
+                        openShopUI(shopGridX);
+                    } else {
+                        logMessage("商人:貨幣が足りないぞ。");
+                    }
+                };
+                container.appendChild(exchange);
+            }
+        }
 
         function applyPurchase(id) {
-    switch(id) {
-        case 'potion':
-            inventory.potions++;
-            break;
+            if (WEAPONS[id]) {
+                inventory.weaponId = id;
+            } else if (ARMORS[id]) {
+                inventory.armorId = id;
+            } else if (CONSUMABLE_KEYS[id]) {
+                inventory[CONSUMABLE_KEYS[id]]++;
+            } else {
+                switch (id) {
+                    case 'pickel':
+                        inventory.hasPickel = true;
+                        break;
 
-        case 'sw2':
-            inventory.weaponId = 'sw2';
-            player.currentAtk = 4;
-            break;
+                    case 'thunderAura':
+                        inventory.hasThunderAura = true;
+                        inventory.lastThunderTime = 0;
+                        logMessage("雷の術を習得した！");
+                        break;
 
-        case 'sw3':
-            inventory.weaponId = 'sw3';
-            player.currentAtk = 5;
-            break;
+                    case 'lifeFruit':
+                        inventory.lifeFruits++;
+                        player.hp += 5;
+                        break;
+                }
+            }
+            recalcStats();
+            updateUI();
+            saveGame();
+        }
 
-        case 'pickel':
-            inventory.hasPickel = true;
-            break;
+        function useConsumable(id) {
+            const key = CONSUMABLE_KEYS[id];
+            if (inventory[key] <= 0 || player.hp >= player.maxHp) return false;
+            inventory[key]--;
+            const heal = Math.min(player.maxHp - player.hp, CONSUMABLES[id].heal);
+            player.hp += heal;
+            addFloatingLabel("+" + heal, player.gx, player.gy, "#0f0");
+            updateUI();
+            return true;
+        }
 
-        case 'thunderAura':
-            inventory.hasThunderAura = true;
-            inventory.lastThunderTime = 0;
-            logMessage("雷の術を習得した！");
-            break;
-
-        case 'sw4':
-            inventory.weaponId = 'sw4';
-            player.currentAtk = 6;
-            break;
-    }
-    updateUI();
-}
+        function quickHeal() {
+            // 弱い薬から順に使う
+            for (let id of ['potion', 'hipotion', 'elixir']) {
+                if (inventory[CONSUMABLE_KEYS[id]] > 0) {
+                    if (!useConsumable(id)) logMessage("HPは満タンだ。");
+                    return;
+                }
+            }
+            logMessage("回復薬を持っていない。");
+        }
 
         function openBagUI() {
             isUIOpen = true;
             const container = document.getElementById('bag-items');
             container.innerHTML = "";
 
-            if (inventory.potions > 0) {
+            const section = text => {
+                const s = document.createElement('div');
+                s.className = 'modal-section';
+                s.innerText = text;
+                container.appendChild(s);
+            };
+            const row = (label, value) => {
+                const r = document.createElement('div');
+                r.className = 'record-row';
+                r.innerHTML = `<span>${label}</span><span>${value}</span>`;
+                container.appendChild(r);
+            };
+
+            section('道具');
+            let hasItem = false;
+            for (let id in CONSUMABLES) {
+                const count = inventory[CONSUMABLE_KEYS[id]];
+                if (count <= 0) continue;
+                hasItem = true;
                 let b = document.createElement('div');
                 b.className = 'menu-btn';
-                b.innerHTML = `<span>ポーション (${inventory.potions})</span> <span>使用する</span>`;
+                b.innerHTML = `<span>${CONSUMABLES[id].name} (${count})</span> <span>使用する</span>`;
                 b.onclick = () => {
-                    if (player.hp < player.maxHp) {
-                        inventory.potions--;
-                        player.hp = Math.min(player.maxHp, player.hp + 5);
-                        updateUI(); openBagUI();
-                    }
+                    if (useConsumable(id)) openBagUI();
                 };
                 container.appendChild(b);
             }
+            if (!hasItem) row('回復薬はありません', '');
 
-            if (inventory.scrolls > 0) {
-                let b = document.createElement('div');
-                b.className = 'menu-btn';
-                const label = inventory.isMagicReady ? '構えを解く' : '構える';
-                b.innerHTML = `<span>雷の巻物 (${inventory.scrolls})</span> <span>${label}</span>`;
-                b.onclick = () => {
-                    inventory.isMagicReady = !inventory.isMagicReady;
-                    closeAllUI();
-                    logMessage(inventory.isMagicReady
-                        ? "雷の巻物を構えた。クリックで3マス先に雷を落とす。"
-                        : "巻物をしまった。");
-                };
-                container.appendChild(b);
+            section('装備');
+            row('武器', `${WEAPONS[inventory.weaponId].name}（+${WEAPONS[inventory.weaponId].atk}）`);
+            row('防具', `${ARMORS[inventory.armorId].name}（防御 ${ARMORS[inventory.armorId].def}）`);
+            if (inventory.hasPickel) row('つるはし', '所持');
+            if (inventory.hasThunderAura) row('雷の術', '習得済み');
+            if (inventory.lifeFruits > 0) row('命の実', `${inventory.lifeFruits} / 10`);
+
+            section('記録');
+            row('レベル', `${player.level}（攻撃 ${player.currentAtk} / 防御 ${player.def}）`);
+            row('最深到達', `地下 ${progress.deepest} 階`);
+            row('ボス撃破', `${progress.bossKills} 回`);
+            row('依頼', `${progress.questIndex} / ${QUESTS.length}`);
+            row('連続ログイン', `${progress.loginStreak} 日`);
+            row('プレイ時間', formatTime(progress.playTimeMs));
+            row('撃破数（合計）', `${totalKills()} 体`);
+            for (let type in ENEMY_TYPES) {
+                if (killsOf(type) > 0) row(`　${ENEMY_TYPES[type].name}`, `${killsOf(type)} 体`);
             }
 
-            if (container.innerHTML === "") container.innerHTML = "<div style='text-align:center; padding:20px; color:#555;'>Empty</div>";
+            const saveBtn = document.createElement('div');
+            saveBtn.className = 'menu-btn btn-special center';
+            saveBtn.style.marginTop = '14px';
+            saveBtn.innerText = 'セーブする';
+            saveBtn.onclick = () => { saveGame(); logMessage("セーブしました。"); };
+            container.appendChild(saveBtn);
+
             document.getElementById('bag-modal').style.display = 'flex';
         }
 
@@ -1184,19 +1946,19 @@ if (dx <= 1 && dy <= 1) {
 
         function executeMagicAttack(t) {
             if (inventory.scrolls <= 0) { inventory.isMagicReady = false; return; }
-            
+
             const tx = magicTarget.gx;
             const ty = magicTarget.gy;
-            
+
             activeProjectiles.push({ type: 'lightning', x: tx, y: ty, rx: tx, ry: ty, start: t });
-            
+
             const e = activeEnemies.find(en => en.isAlive && en.gx === tx && en.gy === ty);
             if (e) {
                 e.hp -= 10;
                 addFloatingLabel("-10", tx, ty, "#ff0");
                 if (e.hp <= 0) handleEnemyDeath(e);
             }
-            
+
             inventory.scrolls--;
             if (inventory.scrolls <= 0) inventory.isMagicReady = false;
             updateUI();
@@ -1208,39 +1970,35 @@ if (dx <= 1 && dy <= 1) {
          * ===================================================================
          */
         function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
 
-    // ===== マップ未ロード時の安全処理 =====
-    if (!worldMap || worldMap.length === 0 || !worldMap[0]) {
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
-        return;
-    }
+            // ===== マップ未ロード時の安全処理 =====
+            if (!worldMap || worldMap.length === 0 || !worldMap[0]) {
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+                return;
+            }
 
-    // Camera follow
-    const camX = Math.floor(
-        -(player.rx * TILE_SIZE) + (VIEW_SIZE / 2 - TILE_SIZE / 2)
-    );
-    const camY = Math.floor(
-        -(player.ry * TILE_SIZE) + (VIEW_SIZE / 2 - TILE_SIZE / 2)
-    );
-    ctx.translate(camX, camY);
+            // Camera follow
+            const camX = Math.floor(-(player.rx * TILE_SIZE) + (VIEW_SIZE / 2 - TILE_SIZE / 2));
+            const camY = Math.floor(-(player.ry * TILE_SIZE) + (VIEW_SIZE / 2 - TILE_SIZE / 2));
+            ctx.translate(camX, camY);
 
-    // Draw Map
-    for (let y = 0; y < worldMap.length; y++) {
-        for (let x = 0; x < worldMap[y].length; x++) {
-            ctx.drawImage(
-                imageLib[worldMap[y][x]],
-                x * TILE_SIZE,
-                y * TILE_SIZE,
-                TILE_SIZE,
-                TILE_SIZE
-            );
-        }
-    }
-
+            // Draw Map (画面内だけ)
+            const x0 = Math.max(0, Math.floor(player.rx) - 3), x1 = Math.min(worldMap[0].length - 1, Math.ceil(player.rx) + 3);
+            const y0 = Math.max(0, Math.floor(player.ry) - 3), y1 = Math.min(worldMap.length - 1, Math.ceil(player.ry) + 3);
+            for (let y = y0; y <= y1; y++) {
+                for (let x = x0; x <= x1; x++) {
+                    const tile = worldMap[y][x];
+                    // ダンジョンの階段は床の上に描く
+                    if (tile === 5 || tile === 6) {
+                        if (currentMap === 'dungeon') ctx.drawImage(imageLib[7], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    }
+                    ctx.drawImage(imageLib[tile], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
 
             // 2. Traps & Chests
             groundTraps.forEach(tr => {
@@ -1251,48 +2009,37 @@ if (dx <= 1 && dy <= 1) {
             });
 
             // 3. Enemies
+            const now = performance.now();
             activeEnemies.forEach(e => {
-    if (!e.isAlive) return;
+                if (!e.isAlive) return;
 
-    ctx.drawImage(
-        imageLib[e.type],
-        e.rx * TILE_SIZE,
-        e.ry * TILE_SIZE,
-        TILE_SIZE,
-        TILE_SIZE
-    );
+                const img = imageLib[e.img] || imageLib[e.type];
+                const size = e.isBoss ? TILE_SIZE * 1.5 : TILE_SIZE;
+                const offset = (TILE_SIZE - size) / 2;
+                ctx.drawImage(img, e.rx * TILE_SIZE + offset, e.ry * TILE_SIZE + offset, size, size);
 
-    const barX = e.rx * TILE_SIZE + 20;
-    const barW = TILE_SIZE - 40;
+                if (e.isBoss) return; // ボスのHPは画面上部に表示
 
-    // HP BAR
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillRect(barX, e.ry * TILE_SIZE + 10, barW, 6);
+                const barX = e.rx * TILE_SIZE + 20;
+                const barW = TILE_SIZE - 40;
 
-    ctx.fillStyle = (e.type === 'tomato') ? "#0f0" : "#f00";
-    ctx.fillRect(
-        barX,
-        e.ry * TILE_SIZE + 10,
-        barW * (e.hp / e.maxHp),
-        6
-    );
+                // HP BAR
+                ctx.fillStyle = "rgba(0,0,0,0.5)";
+                ctx.fillRect(barX, e.ry * TILE_SIZE + 10, barW, 6);
 
-    // ACTION GAUGE
-    const now = performance.now();
-    let progress = (now - e.lastAction) / e.actionCd;
-    progress = Math.max(0, Math.min(progress, 1));
+                ctx.fillStyle = (e.type === 'tomato') ? "#0f0" : (e.isElite ? "#ffd700" : "#f00");
+                ctx.fillRect(barX, e.ry * TILE_SIZE + 10, barW * Math.max(0, e.hp / e.maxHp), 6);
 
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillRect(barX, e.ry * TILE_SIZE + 18, barW, 4);
+                // ACTION GAUGE
+                let gauge = (now - e.lastAction) / e.actionCd;
+                gauge = Math.max(0, Math.min(gauge, 1));
 
-    ctx.fillStyle = "#4fc3ff";
-    ctx.fillRect(
-        barX,
-        e.ry * TILE_SIZE + 18,
-        barW * progress,
-        4
-    );
-});
+                ctx.fillStyle = "rgba(0,0,0,0.5)";
+                ctx.fillRect(barX, e.ry * TILE_SIZE + 18, barW, 4);
+
+                ctx.fillStyle = "#4fc3ff";
+                ctx.fillRect(barX, e.ry * TILE_SIZE + 18, barW * gauge, 4);
+            });
 
             // 4. Projectiles
             activeProjectiles.forEach(p => {
@@ -1327,9 +2074,22 @@ if (dx <= 1 && dy <= 1) {
                 ctx.restore();
             }
 
-            // 8. Damage Labels
+            ctx.restore();
+
+            // 8. Dungeon darkness (画面座標)
+            if (currentMap === 'dungeon') {
+                const grad = ctx.createRadialGradient(VIEW_SIZE/2, VIEW_SIZE/2, 140, VIEW_SIZE/2, VIEW_SIZE/2, 470);
+                grad.addColorStop(0, 'rgba(0,0,0,0)');
+                grad.addColorStop(1, 'rgba(0,0,0,0.8)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, VIEW_SIZE, VIEW_SIZE);
+            }
+
+            // 9. Damage Labels
+            ctx.save();
+            ctx.translate(camX, camY);
             floatingLabels.forEach(lbl => {
-                let age = (performance.now() - lbl.start) / 1000;
+                let age = (now - lbl.start) / 1000;
                 ctx.fillStyle = lbl.color;
                 ctx.font = "bold 40px Arial";
                 ctx.shadowBlur = 4;
@@ -1337,8 +2097,24 @@ if (dx <= 1 && dy <= 1) {
                 ctx.fillText(lbl.text, lbl.x * TILE_SIZE + 30, lbl.y * TILE_SIZE + 40 - (age * 80));
                 ctx.shadowBlur = 0;
             });
-
             ctx.restore();
+
+            // 10. Boss HP bar (画面上部)
+            const boss = activeEnemies.find(e => e.isBoss && e.isAlive);
+            if (boss) {
+                const w = 420, x = (VIEW_SIZE - w) / 2, y = 34;
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 18px sans-serif";
+                ctx.textAlign = "center";
+                ctx.shadowBlur = 4; ctx.shadowColor = "#000";
+                ctx.fillText(boss.name, VIEW_SIZE / 2, y - 8);
+                ctx.shadowBlur = 0;
+                ctx.textAlign = "left";
+                ctx.fillStyle = "rgba(0,0,0,0.7)";
+                ctx.fillRect(x - 2, y - 2, w + 4, 16);
+                ctx.fillStyle = boss.isFinal ? "#b066ff" : "#e22";
+                ctx.fillRect(x, y, w * Math.max(0, boss.hp / boss.maxHp), 12);
+            }
         }
 
         /**
@@ -1347,16 +2123,25 @@ if (dx <= 1 && dy <= 1) {
          * ===================================================================
          */
         window.addEventListener('keydown', e => {
-            inputKeys[e.key.toLowerCase()] = true;
-            if (e.key.toLowerCase() === 'e') {
+            if (gameState !== "playing") return;
+            const key = e.key.toLowerCase();
+            inputKeys[key] = true;
+            if (key === 'e' && player.isAlive) {
                 if (isUIOpen) closeAllUI(); else openBagUI();
             }
+            if (key === 'q' && !isUIOpen && player.isAlive) quickHeal();
             if (e.key === 'Escape') closeAllUI();
+            if (e.code === 'Space') {
+                e.preventDefault(); // スクロール防止
+                handlePrimaryAction();
+            }
         });
 
         window.addEventListener('keyup', e => {
             inputKeys[e.key.toLowerCase()] = false;
         });
+
+        window.addEventListener('blur', () => { inputKeys = {}; });
 
         window.addEventListener('mousemove', e => {
             const rect = canvas.parentNode.getBoundingClientRect();
@@ -1364,19 +2149,17 @@ if (dx <= 1 && dy <= 1) {
             cursorY = e.clientY - rect.top;
         });
 
-        window.addEventListener('keydown', e => {
-    if (e.code === 'Space') {
-        e.preventDefault(); // スクロール防止
-        handlePrimaryAction();
-    }
-});
-
-
         document.getElementById('viewport').addEventListener('mousedown', e => {
             if (e.button === 0) handlePrimaryAction();
         });
 
         window.addEventListener('contextmenu', e => e.preventDefault());
+
+        // タブを閉じる・切り替えるときにセーブ
+        window.addEventListener('beforeunload', () => saveGame(true));
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') saveGame(true);
+        });
 
         // Launch
         boot();
