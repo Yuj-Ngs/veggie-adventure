@@ -229,7 +229,8 @@
             hasPickel: false,
             weaponId: 'sw', // 'sw' (wood), 'sw2' (stone), 'sw3' (iron)
             hasThunderAura: false,
-        lastThunderTime: 0
+            lastThunderTime: 0,
+            dungeonChestOpened: false // ダンジョンの宝箱は1回きり
         };
 
         /**
@@ -363,7 +364,7 @@
                 isUIOpen = true; // 読み込み中は操作を止める
                 await loadDungeon();
                 currentMap = 'dungeon';
-                objectChests = [{ x: 3, y: 4, isOpen: false, isDungeon: true }];
+                objectChests = [{ x: 3, y: 4, isOpen: inventory.dungeonChestOpened, isDungeon: true }];
                 activeEnemies = [];
                 activeProjectiles = [];
                 groundTraps = [];
@@ -818,6 +819,7 @@ if (e.type === 'tomato') {
             // Open Chest
             else if (targetChest) {
                 targetChest.isOpen = true;
+                if (targetChest.isDungeon) inventory.dungeonChestOpened = true;
                 let gain = 5 + Math.floor(Math.random() * 5);
                 inventory.bronze += gain;
                 addFloatingLabel("+" + gain + "B", tx, ty, "#ffd700");
@@ -1013,7 +1015,7 @@ if (dx <= 1 && dy <= 1) {
     modal.style.display = 'flex';
 
     let catalogue = [
-        { id: 'potion', name: 'ポーション', b: 15, s: 0, desc: 'HPを4回復' }
+        { id: 'potion', name: 'ポーション', b: 15, s: 0, desc: 'HPを5回復' }
     ];
 
     if (!isAdvanced) {
@@ -1024,7 +1026,7 @@ if (dx <= 1 && dy <= 1) {
     if (inventory.weaponId === 'sw2') {
         catalogue.push({
             id: 'sw3',
-            name: '鋼の剣',
+            name: '鉄の剣',
             b: 30,
             s: 0,
             desc: '攻撃力が5に強化'
@@ -1035,7 +1037,7 @@ if (dx <= 1 && dy <= 1) {
     if (inventory.weaponId === 'sw3') {
         catalogue.push({
             id: 'sw4',
-            name: '鉄の剣',
+            name: '鋼の剣',
             b: 50,
             s: 0,
             desc: '攻撃力が6に強化'
@@ -1100,15 +1102,6 @@ if (dx <= 1 && dy <= 1) {
             }
         };
         container.appendChild(exchange);
-        if (isAdvanced && !inventory.hasThunderAura) {
-    catalogue.push({
-        id: 'thunderAura',
-        name: '雷の術（常時）',
-        b: 0,
-        s: 4,
-        desc: '5秒毎に周囲4マスへ雷を落とす'
-    });
-}
     }
 }
 
@@ -1165,7 +1158,20 @@ if (dx <= 1 && dy <= 1) {
                 container.appendChild(b);
             }
 
-            
+            if (inventory.scrolls > 0) {
+                let b = document.createElement('div');
+                b.className = 'menu-btn';
+                const label = inventory.isMagicReady ? '構えを解く' : '構える';
+                b.innerHTML = `<span>雷の巻物 (${inventory.scrolls})</span> <span>${label}</span>`;
+                b.onclick = () => {
+                    inventory.isMagicReady = !inventory.isMagicReady;
+                    closeAllUI();
+                    logMessage(inventory.isMagicReady
+                        ? "雷の巻物を構えた。クリックで3マス先に雷を落とす。"
+                        : "巻物をしまった。");
+                };
+                container.appendChild(b);
+            }
 
             if (container.innerHTML === "") container.innerHTML = "<div style='text-align:center; padding:20px; color:#555;'>Empty</div>";
             document.getElementById('bag-modal').style.display = 'flex';
