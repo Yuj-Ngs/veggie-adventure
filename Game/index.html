@@ -161,7 +161,7 @@
     </div>
 
 
-    <div id="message-log">WASDで移動。マウス左クリックでアクション。</div>
+    <div id="message-log">WASDで移動。マウスで向きを決め、左クリック（またはスペース）でアクション。Eでバッグ。</div>
 
     <script>
         /**
@@ -296,19 +296,7 @@
             logMessage(": データを読み込み中...");
             try {
                 // Load Map Data
-                // TODO: loadMap()に置き換える
-                loadMap();
-                /*
-                const response = await fetch(MAP_FILE);
-                if (!response.ok) throw new Error("Map not found");
-                const text = await response.text();
-                worldMap = text.trim().split('\n').map(row => row.trim().split('').map(Number));
-                
-                // Set Canvas Dimensions based on map
-                canvas.width = worldMap[0].length * TILE_SIZE;
-                canvas.height = worldMap.length * TILE_SIZE;
-
-                */
+                await loadMap();
 
                 // Load Images
                 let loadedCount = 0;
@@ -336,12 +324,11 @@
             }
         }
 
-        // TODO: マップfieldの読み込み処理を関数として分離する 
         async function loadMap() {
             const response = await fetch(MAP_FILE);
-                if (!response.ok) throw new Error("Map not found");
-                const text = await response.text();
-                worldMap = text.trim().split('\n').map(row => row.trim().split('').map(Number));
+            if (!response.ok) throw new Error("Map not found");
+            const text = await response.text();
+            worldMap = text.trim().split('\n').map(row => row.trim().split('').map(Number));
 
             canvas.width = worldMap[0].length * TILE_SIZE;
             canvas.height = worldMap.length * TILE_SIZE;
@@ -349,41 +336,50 @@
 
         async function loadDungeon() {
             const res = await fetch('dungeon.txt');
+            if (!res.ok) throw new Error("Dungeon not found");
             const text = await res.text();
-            dungeonMap = text.trim().split('\n').map(r => r.split('').map(Number));
+            dungeonMap = text.trim().split('\n').map(r => r.trim().split('').map(Number));
             worldMap = dungeonMap;
 
             canvas.width = worldMap[0].length * TILE_SIZE;
             canvas.height = worldMap.length * TILE_SIZE;
         }
 
+        const DUNGEON_SPAWN = { gx: 1, gy: 2 }; // 出口(1,1)のすぐ下
 
-        function checkTileEvents(gx, gy) {
+        async function checkTileEvents(gx, gy) {
             let tile = worldMap[gy][gx];
-            console.log("debug: 実行されました");
-            console.log("tile=" + tile);
-            console.log("currentMap=" + currentMap);
 
             if (tile === 5 && currentMap === 'field') {
+                // 地上の状態を保存（壊した岩・敵・宝箱を戻ったときに復元する）
                 dungeonReturn = {
-                    // TODO: ダンジョンのスポーン地点を修正する
                     gx: player.gx,
-                    gy: player.gy
+                    gy: player.gy,
+                    map: worldMap,
+                    enemies: activeEnemies,
+                    chests: objectChests,
+                    traps: groundTraps
                 };
-                loadDungeon();
+                isUIOpen = true; // 読み込み中は操作を止める
+                await loadDungeon();
                 currentMap = 'dungeon';
-                objectChests = [{ x: 3, y: 2, isOpen: false, isDungeon: true }];
+                objectChests = [{ x: 3, y: 4, isOpen: false, isDungeon: true }];
                 activeEnemies = [];
-                
+                activeProjectiles = [];
+                groundTraps = [];
+                placePlayer(DUNGEON_SPAWN.gx, DUNGEON_SPAWN.gy);
+                isUIOpen = false;
+                logMessage("ダンジョンに入った。");
             }
             else if (tile === 5 && currentMap === 'dungeon') {
                 returnFromDungeon();
-                loadMap();
-                // TODO: loadMap()を呼び出す
             }
+        }
 
-
-            
+        function placePlayer(gx, gy) {
+            player.gx = player.tx = player.sx = player.rx = gx;
+            player.gy = player.ty = player.sy = player.ry = gy;
+            player.isMoving = false;
         }
 
 
@@ -401,7 +397,7 @@
             isGameRunning = true;
             updateUI();
             requestAnimationFrame(gameLoop);
-            logMessage("冒険の始まりだ。あたりを散策してみよう。");
+            logMessage("冒険の始まりだ。WASDで移動、マウスで向きを決めてクリック（またはスペース）で攻撃・調べる。Eでバッグ。");
         }
 
         function spawnRandomChest() {
@@ -521,13 +517,15 @@
                 
         function returnFromDungeon() {
             currentMap = 'field';
-            if (dungeonReturn)   // 地上マップを再ロード
-
             if (dungeonReturn) {
-            player.gx = dungeonReturn.gx;
-            player.gy = dungeonReturn.gy;
-            player.rx = player.gx;
-            player.ry = player.gy;
+                worldMap = dungeonReturn.map;
+                activeEnemies = dungeonReturn.enemies;
+                objectChests = dungeonReturn.chests;
+                groundTraps = dungeonReturn.traps;
+                activeProjectiles = [];
+                canvas.width = worldMap[0].length * TILE_SIZE;
+                canvas.height = worldMap.length * TILE_SIZE;
+                placePlayer(dungeonReturn.gx, dungeonReturn.gy);
             }
 
             logMessage("地上に戻った");
@@ -580,7 +578,7 @@
                 let pool = ['pepper', 'eggplant', 'onion'];
                 
                 // Wood Sword (sw) -> ONLY pepper, eggplant, onion (no mushrooms/chili)
-                if (inventory.weaponId === 'sw2' || inventory.weaponId === 'sw3') {
+                if (['sw2', 'sw3', 'sw4'].includes(inventory.weaponId)) {
                     pool.push('mushroom');
                     if (!activeEnemies.some(e => e.isAlive && e.type === 'tomato')) {
                         pool.push('tomato');
@@ -588,7 +586,7 @@
                 }
                 
                 // Iron Sword (sw3) -> Unlocks chili
-                if (inventory.weaponId === 'sw3') {
+                if (['sw3', 'sw4'].includes(inventory.weaponId)) {
                     pool.push('chili');
                 }
 
@@ -1367,6 +1365,10 @@ if (dx <= 1 && dy <= 1) {
     }
 });
 
+
+        document.getElementById('viewport').addEventListener('mousedown', e => {
+            if (e.button === 0) handlePrimaryAction();
+        });
 
         window.addEventListener('contextmenu', e => e.preventDefault());
 
