@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>RPG - Veggie Adventure: Ultimate Expansion</title>
+    <style>
+        /* ===================================================================
+           1. UI/UX & Layout Styles
+           =================================================================== */
+           
+        body { 
+            background-color: #020202; 
+            color: #e0e0e0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            font-family: 'Consolas', 'Monaco', 'Hiragino Kaku Gothic ProN', sans-serif; 
+            overflow: hidden; 
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        #ui-panel { 
+            width: 700px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 10px; 
+            background: linear-gradient(180deg, #222, #111);
+            padding: 10px 20px;
+            border: 3px solid #444;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .stats-group { display: flex; flex-direction: column; width: 220px; }
+        .stats-label { font-size: 12px; margin-bottom: 4px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        
+        #hp-bar-outer { width: 100%; height: 14px; background: #300; border: 1px solid #555; border-radius: 2px; position: relative; }
+        #hp-bar-inner { width: 100%; height: 100%; background: linear-gradient(90deg, #a00, #f22); transition: width 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        #hp-text { position: absolute; width: 100%; text-align: center; font-size: 10px; line-height: 14px; color: #fff; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+
+        .currency-group { display: flex; gap: 15px; }
+        .currency-unit { display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 18px; color: #ffd700; }
+        .currency-img { width: 24px; height: 24px; image-rendering: pixelated; }
+
+        #viewport { 
+            width: 640px; 
+            height: 640px; 
+            overflow: hidden; 
+            border: 8px solid #2c2c2c; 
+            position: relative; 
+            background: #111; 
+            border-radius: 4px;
+        }
+
+        canvas { image-rendering: pixelated; position: absolute; }
+
+        /* Effects Layer */
+        #fx-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
+            transition: background 0.3s;
+        }
+
+        #message-log { 
+            margin-top: 10px; padding: 10px; border: 2px solid #555; 
+            width: 680px; background: rgba(20, 20, 20, 0.9); min-height: 30px; 
+            font-size: 14px; text-align: center; color: #00ffcc;
+            border-radius: 4px; box-shadow: inset 0 0 10px #000;
+        }
+
+        /* Modals */
+        .modal { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 380px; background: rgba(10, 10, 10, 0.95); 
+            border: 4px double #ffd700; display: none; 
+            flex-direction: column; padding: 25px; z-index: 500;
+            box-shadow: 0 0 30px rgba(0,0,0,1);
+            border-radius: 10px;
+        }
+
+        .modal-header { text-align: center; color: #ffd700; margin-bottom: 20px; font-size: 22px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+
+        .menu-btn { 
+            margin: 6px 0; padding: 12px; border: 1px solid #444; 
+            cursor: pointer; text-align: center; background: #1a1a1a; color: #eee;
+            font-weight: bold; font-size: 14px; transition: all 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .menu-btn:hover { background: #333; border-color: #ffd700; color: #fff; transform: scale(1.02); }
+        .menu-btn:active { transform: scale(0.98); }
+        
+        .btn-special { border-color: #00ffaa; color: #00ffaa; }
+        .btn-special:hover { background: #004433; }
+
+        #death-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(40, 0, 0, 0.85); display: none; 
+            flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 1000; color: #ff0000; font-size: 50px; text-shadow: 0 0 20px #000;
+            font-weight: 900;
+        }
+
+        .info-tip { font-size: 12px; color: #888; margin-top: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <div class="stats-group">
+            <div class="stats-label">HP</div>
+            <div id="hp-bar-outer">
+                <div id="hp-bar-inner"></div>
+                <div id="hp-text"><span id="hp-cur">20</span> / <span id="hp-max">20</span></div>
+            </div>
+        </div>
+        <div class="currency-group">
+            <div class="currency-unit">
+                <img src="bronze_coin.png" class="currency-img" alt="B">
+                <span id="val-bronze">0</span>
+            </div>
+            <div class="currency-unit">
+                <img src="silver_coin.png" class="currency-img" alt="S">
+                <span id="val-silver">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="viewport">
+            <div id="fx-layer"></div>
+            <canvas id="mainCanvas"></canvas>
+            
+            <div id="shop-modal" class="modal">
+                <div id="shop-name" class="modal-header">General Store</div>
+                <div id="shop-items"></div>
+                <div class="info-tip">所持金に注意して購入してください。</div>
+                <button class="menu-btn" style="margin-top:20px; border-color:#800;" onclick="closeAllUI()">[ ESC ] 閉じる</button>
+            </div>
+
+            <div id="bag-modal" class="modal">
+                <div class="modal-header">Inventory</div>
+                <div id="bag-items"></div>
+                <div class="info-tip">[ E ] キーで開閉できます。</div>
+                <button class="menu-btn" style="margin-top:20px;" onclick="closeAllUI()">閉じる</button>
+            </div>
+
+            <div id="death-overlay">
+                <div>YOU PERISHED</div>
+                <button class="menu-btn" style="width:200px; margin-top:40px; border-color:#f00;" onclick="location.reload()">TRY AGAIN</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="message-log">WASDで移動。マウス左クリックでアクション。</div>
+
+    <script>
+        /**
+         * ===================================================================
+         * 2. Game Constants & Configuration
+         * ===================================================================
+         */
+        const TILE_SIZE = 128;
+        const VIEW_SIZE = 640;
+        const ATTACK_INTERVAL = 400; // ms
+        const SPAWN_INTERVAL = 8000; // ms
+        const MAP_FILE = 'map.txt';
+
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const msgLog = document.getElementById('message-log');
+        const fxLayer = document.getElementById('fx-layer');
+
+        // State Tracking
+        let isGameRunning = false;
+        let worldMap = [];
+        let objectChests = [];
+        let activeEnemies = [];
+        let activeProjectiles = [];
+        let floatingLabels = [];
+        let groundTraps = []; 
+        let inputKeys = {};
+        let lastSpawnTime = 0;
+        let isUIOpen = false;
+        let cursorX = 0, cursorY = 0;
+        let lastAttackTime = 0;
+        let poisonTimer = 0;
+        let frameCount = 0;
+        let gameState = "menu"; // "menu" | "playing"
+        let currentMap = 'field'; // 'field' | 'dungeon'
+        let dungeonMap = [];
+        let dungeonReturn = null;
+
+        /**
+         * Player State Object
+         */
+        const player = {
+            gx: 5, gy: 5,       // Grid coordinates
+            rx: 5, ry: 5,       // Render coordinates (for interpolation)
+            sx: 5, sy: 5,       // Start animation grid
+            tx: 5, ty: 5,       // Target animation grid
+            isMoving: false,
+            animStart: 0,
+            hp: 20,
+            maxHp: 20,
+            baseAtk: 3,
+            currentAtk: 3,
+            isAlive: true,
+            direction: 'down'
+        };
+
+        /**
+         * Inventory State
+         */
+        const inventory = {
+            bronze: 0,
+            silver: 0,
+            potions: 0,
+            scrolls: 0,
+            hasPickel: false,
+            weaponId: 'sw', // 'sw' (wood), 'sw2' (stone), 'sw3' (iron)
+            hasThunderAura: false,
+        lastThunderTime: 0
+        };
+
+        /**
+         * Action/Hit Effect State
+         */
+        const hitEffect = {
+            isActive: false,
+            imageKey: null,
+            gridX: 0,
+            gridY: 0,
+            vectorX: 0,
+            vectorY: 0,
+            startTime: 0
+        };
+
+        const magicTarget = { gx: 0, gy: 0 };
+
+        /**
+         * Asset Library Definition
+         */
+        const ASSETS_MAP = {
+            // Tiles
+            0: 'grass.png',
+            1: 'rock.png',
+            2: 'water.png',
+            3: 'shop.png',
+            4: 'sand.png',
+            5: 'dungeon.png',
+            // Entity
+            'player': 'player.png',
+            'chest': 'chest.png',
+            // Enemies
+            'eggplant': 'enemy.png',
+            'onion': 'onion_enemy.png',
+            'tomato': 'enemy_tomato.png',
+            'pepper': 'enemy_green_pepper.png',
+            'chili': 'enemy_pepper.png', 
+            'mushroom': 'mushroom.png',
+            'mushroom_trap': 'mushroom2.png',
+            'burdock': 'enemy_burdock.png',
+            // Combat
+            'seed': 'bell_pepper_seeds.png',
+            'burdock_atk': 'burdock_attack.png',
+            'sw': 'sword.png',
+            'sw2': 'sword2.png',
+            'sw3': 'sword3.png',
+            'sw4':'sword4.png',
+            'pickel': 'pickel.png',
+            'potion': 'portion.png',
+            'scroll': 'scroll_lightning.png',
+            'lightning': 'Lightning.png',
+            'target_normal': 'target.png',
+            'target_magic': 'target2.png'
+        };
+
+        const imageLib = {};
+
+        /**
+         * ===================================================================
+         * 3. Initialization Logic
+         * ===================================================================
+         */
+        async function boot() {
+            logMessage(": データを読み込み中...");
+            try {
+                // Load Map Data
+                // TODO: loadMap()に置き換える
+                loadMap();
+                /*
+                const response = await fetch(MAP_FILE);
+                if (!response.ok) throw new Error("Map not found");
+                const text = await response.text();
+                worldMap = text.trim().split('\n').map(row => row.trim().split('').map(Number));
+                
+                // Set Canvas Dimensions based on map
+                canvas.width = worldMap[0].length * TILE_SIZE;
+                canvas.height = worldMap.length * TILE_SIZE;
+
+                */
+
+                // Load Images
+                let loadedCount = 0;
+                const totalAssets = Object.keys(ASSETS_MAP).length;
+                
+                for (let key in ASSETS_MAP) {
+                    const img = new Image();
+                    img.onload = () => {
+                        loadedCount++;
+                        if (loadedCount === totalAssets) startGame();
+                    };
+                    img.onerror = () => {
+                        console.error(`Failed to load asset: ${key}`);
+                        loadedCount++;
+                        if (loadedCount === totalAssets) startGame();
+                    };
+                    img.src = ASSETS_MAP[key];
+                    imageLib[key] = img;
+                }
+            } catch (err) {
+                logMessage("Error: " + err.message);
+                // Fallback map for local testing if server fails
+                worldMap = Array(20).fill(0).map(() => Array(20).fill(0));
+                startGame();
+            }
+        }
+
+        // TODO: マップfieldの読み込み処理を関数として分離する 
+        async function loadMap() {
+            const response = await fetch(MAP_FILE);
+                if (!response.ok) throw new Error("Map not found");
+                const text = await response.text();
+                worldMap = text.trim().split('\n').map(row => row.trim().split('').map(Number));
+
+            canvas.width = worldMap[0].length * TILE_SIZE;
+            canvas.height = worldMap.length * TILE_SIZE;
+        }
+
+        async function loadDungeon() {
+            const res = await fetch('dungeon.txt');
+            const text = await res.text();
+            dungeonMap = text.trim().split('\n').map(r => r.split('').map(Number));
+            worldMap = dungeonMap;
+
+            canvas.width = worldMap[0].length * TILE_SIZE;
+            canvas.height = worldMap.length * TILE_SIZE;
+        }
+
+
+        function checkTileEvents(gx, gy) {
+            let tile = worldMap[gy][gx];
+            console.log("debug: 実行されました");
+            console.log("tile=" + tile);
+            console.log("currentMap=" + currentMap);
+
+            if (tile === 5 && currentMap === 'field') {
+                dungeonReturn = {
+                    // TODO: ダンジョンのスポーン地点を修正する
+                    gx: player.gx,
+                    gy: player.gy
+                };
+                loadDungeon();
+                currentMap = 'dungeon';
+                objectChests = [{ x: 3, y: 2, isOpen: false, isDungeon: true }];
+                activeEnemies = [];
+                
+            }
+            else if (tile === 5 && currentMap === 'dungeon') {
+                returnFromDungeon();
+                loadMap();
+                // TODO: loadMap()を呼び出す
+            }
+
+
+            
+        }
+
+
+        function startGame() {
+            // Initial Chest Spawning
+            for (let i = 0; i < 6; i++) {
+                spawnRandomChest();
+            }
+
+            // Initial Enemy Wave
+            for (let i = 0; i < 5; i++) {
+                performSpawnCycle();
+            }
+
+            isGameRunning = true;
+            updateUI();
+            requestAnimationFrame(gameLoop);
+            logMessage("冒険の始まりだ。あたりを散策してみよう。");
+        }
+
+        function spawnRandomChest() {
+            let placed = false;
+            while (!placed) {
+                let rx = Math.floor(Math.random() * worldMap[0].length);
+                let ry = Math.floor(Math.random() * worldMap.length);
+                if (worldMap[ry][rx] === 0) {
+                    objectChests.push({ x: rx, y: ry, isOpen: false });
+                    placed = true;
+                }
+            }
+        }
+
+        /**
+         * ===================================================================
+         * 4. Core Game Loop
+         * ===================================================================
+         */
+        function gameLoop(currentTime) {
+            if (!isGameRunning) return;
+
+            if (!isUIOpen && player.isAlive) {
+                processPlayerMovement(currentTime);
+                processEnvironment(currentTime);
+                processEnemies(currentTime);
+                processTraps(currentTime);
+                processProjectiles(currentTime);
+                processAutoActions(currentTime);
+            }
+
+
+            // Global effects (Labels)
+            floatingLabels = floatingLabels.filter(lbl => currentTime - lbl.start < 1200);
+            
+            frameCount++;
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * ===================================================================
+         * 5. Movement & Collision Systems
+         * ===================================================================
+         */
+        function processPlayerMovement(t) {
+            if (!player.isMoving) {
+                player.rx = player.gx;
+                player.ry = player.gy;
+                handleKeyboardInput(t);
+                return;
+            }
+
+            // Normal speed vs Poisoned speed
+            let duration = (poisonTimer > 0) ? 500 : 200;
+            let progress = Math.min((t - player.animStart) / duration, 1);
+            
+            player.rx = player.sx + (player.tx - player.sx) * progress;
+            player.ry = player.sy + (player.ty - player.sy) * progress;
+
+            if (progress >= 1) {
+                player.isMoving = false;
+                player.gx = player.tx;
+                player.gy = player.ty;
+                checkTileEvents(player.gx, player.gy);
+            }
+        }
+
+        function handleKeyboardInput(t) {
+            let dx = 0, dy = 0;
+            if (inputKeys['w'] || inputKeys['arrowup']) dy = -1;
+            else if (inputKeys['s'] || inputKeys['arrowdown']) dy = 1;
+            else if (inputKeys['a'] || inputKeys['arrowleft']) dx = -1;
+            else if (inputKeys['d'] || inputKeys['arrowright']) dx = 1;
+
+            if (dx !== 0 || dy !== 0) {
+                attemptMove(player, player.gx + dx, player.gy + dy, t);
+            }
+        }
+
+        function attemptMove(entity, nx, ny, t) {
+            if (isTileBlocked(nx, ny, entity)) return false;
+            
+            entity.sx = entity.gx;
+            entity.sy = entity.gy;
+            entity.tx = nx;
+            entity.ty = ny;
+            entity.animStart = t;
+            entity.isMoving = true;
+            return true;
+        }
+
+        function isTileBlocked(nx, ny, self) {
+            // Boundary check
+            if (ny < 0 || ny >= worldMap.length || nx < 0 || nx >= worldMap[0].length) return true;
+            
+            const tileType = worldMap[ny][nx];
+            
+            // Burdock can only move on Sand (4)
+            if (self && self.type === 'burdock' && tileType !== 4) return true;
+            
+            // Wall/Water/Shop collisions
+            if ([1, 2, 3].includes(tileType)) return true;
+            
+            // Entity collision (Player)
+            if (self !== player && player.gx === nx && player.gy === ny) return true;
+            
+            // Entity collision (Enemies)
+            for (let e of activeEnemies) {
+                if (e.isAlive && e !== self) {
+                    if ((e.gx === nx && e.gy === ny) || (e.isMoving && e.tx === nx && e.ty === ny)) return true;
+                }
+            }
+            
+            return false;
+        }
+                
+        function returnFromDungeon() {
+            currentMap = 'field';
+            if (dungeonReturn)   // 地上マップを再ロード
+
+            if (dungeonReturn) {
+            player.gx = dungeonReturn.gx;
+            player.gy = dungeonReturn.gy;
+            player.rx = player.gx;
+            player.ry = player.gy;
+            }
+
+            logMessage("地上に戻った");
+        }
+
+
+        /**
+         * ===================================================================
+         * 6. Enemy AI & Spawning (Special Logic for Swords)
+         * ===================================================================
+         */
+        function performSpawnCycle() {
+            // Limit based on sword quality
+            let maxCount = 15;
+            if (inventory.weaponId === 'sw2') maxCount = 25;
+            if (inventory.weaponId === 'sw3') maxCount = 40;
+            if (inventory.weaponId === 'sw4') maxCount = 55;
+
+            if (activeEnemies.filter(e => e.isAlive).length >= maxCount) return;
+
+            let pos = findValidSpawnPoint();
+            if (pos) {
+                spawnEnemyAt(pos.x, pos.y);
+            }
+        }
+
+        function findValidSpawnPoint() {
+            for (let i = 0; i < 40; i++) {
+                let rx = Math.floor(Math.random() * worldMap[0].length);
+                let ry = Math.floor(Math.random() * worldMap.length);
+                const tile = worldMap[ry][rx];
+                
+                // Away from player
+                let dist = Math.abs(player.gx - rx) + Math.abs(player.gy - ry);
+                if ((tile === 0 || tile === 4) && dist > 7) {
+                    return { x: rx, y: ry };
+                }
+            }
+            return null;
+        }
+
+        function spawnEnemyAt(x, y) {
+            const tile = worldMap[y][x];
+            let type = 'eggplant';
+
+            if (tile === 4) {
+                type = 'burdock';
+            } else {
+                // IMPORTANT: Conditional unlocks based on weapon
+                let pool = ['pepper', 'eggplant', 'onion'];
+                
+                // Wood Sword (sw) -> ONLY pepper, eggplant, onion (no mushrooms/chili)
+                if (inventory.weaponId === 'sw2' || inventory.weaponId === 'sw3') {
+                    pool.push('mushroom');
+                    if (!activeEnemies.some(e => e.isAlive && e.type === 'tomato')) {
+                        pool.push('tomato');
+                    }
+                }
+                
+                // Iron Sword (sw3) -> Unlocks chili
+                if (inventory.weaponId === 'sw3') {
+                    pool.push('chili');
+                }
+
+                type = pool[Math.floor(Math.random() * pool.length)];
+            }
+
+            const config = {
+                'eggplant': { hp: 15, atk: 2, cd: 2000, speed: 300 },
+                'onion':    { hp: 25, atk: 1, cd: 4000, speed: 350 },
+                'pepper':   { hp: 12, atk: 2, cd: 1800, speed: 300 },
+                'tomato':   { hp: 40, atk: 0, cd: 1000, speed: 150 }, // Healer
+                'mushroom': { hp: 20, atk: 2, cd: 2400, speed: 280 },
+                'chili':    { hp: 45, atk: 5, cd: 1500, speed: 250 },
+                'burdock':  { hp: 22, atk: 4, cd: 2200, speed: 200 }
+            }[type];
+
+            activeEnemies.push({
+                type, gx: x, gy: y, rx: x, ry: y, sx: x, sy: y, tx: x, ty: y,
+                hp: config.hp, maxHp: config.hp, atk: config.atk, 
+                actionCd: config.cd, moveDur: config.speed,
+                isAlive: true, isMoving: false, animStart: 0, 
+                lastAction: performance.now(), stunUntil: 0
+            });
+        }
+
+        function processEnemies(t) {
+            activeEnemies.forEach(e => {
+                if (!e.isAlive) return;
+
+                // Move interpolation
+                if (e.isMoving) {
+                    let p = Math.min((t - e.animStart) / e.moveDur, 1);
+                    e.rx = e.sx + (e.tx - e.sx) * p;
+                    e.ry = e.sy + (e.ty - e.sy) * p;
+                    if (p >= 1) { 
+                        e.isMoving = false; e.gx = e.tx; e.gy = e.ty; e.lastAction = t; 
+                    }
+                } else {
+                    e.rx = e.gx; e.ry = e.gy;
+                    // Logic Decision
+                    if (t - e.lastAction > e.actionCd && t > e.stunUntil) {
+                        decideEnemyAction(e, t);
+                    }
+                }
+            });
+        }
+
+        function decideEnemyAction(e, t) {
+            const dx = player.gx - e.gx;
+            const dy = player.gy - e.gy;
+            const dist = Math.abs(dx) + Math.abs(dy);
+
+            // 1. Tomato: Support AI
+if (e.type === 'tomato') {
+
+    // (A) 傷ついた仲間を最優先で探す
+    let injured = activeEnemies.find(o =>
+        o.isAlive &&
+        o !== e &&
+        o.hp < o.maxHp
+    );
+
+    if (injured) {
+        const d = Math.abs(injured.gx - e.gx) + Math.abs(injured.gy - e.gy);
+
+        // 隣接していれば回復
+        if (d <= 1) {
+    injured.hp = Math.min(injured.maxHp, injured.hp + 4);
+    addFloatingLabel("+4", injured.gx, injured.gy, "#0f0");
+
+    // 回復後の硬直（行動ゲージ遅延）
+    e.lastAction = t + 800;   // ← 好みで 500～1200ms
+
+    return;
+}
+
+        // 近づく
+        moveToTarget(e, injured.gx, injured.gy, t);
+        return;
+    }
+
+    // (B) 回復対象がいない場合：プレイヤーから逃げる
+    const dx = e.gx - player.gx;
+    const dy = e.gy - player.gy;
+
+    // プレイヤーから最も遠くなる方向を選ぶ
+    let dirs = [
+        { x: 1, y: 0 },
+        { x: -1, y: 0 },
+        { x: 0, y: 1 },
+        { x: 0, y: -1 }
+    ];
+
+    let best = null;
+    let maxDist = -1;
+
+    for (let d of dirs) {
+        let nx = e.gx + d.x;
+        let ny = e.gy + d.y;
+
+        if (isTileBlocked(nx, ny, e)) continue;
+
+        let dist = Math.abs(player.gx - nx) + Math.abs(player.gy - ny);
+        if (dist > maxDist) {
+            maxDist = dist;
+            best = d;
+        }
+    }
+
+    if (best) {
+        attemptMove(e, e.gx + best.x, e.gy + best.y, t);
+    } else {
+        e.lastAction = t;
+    }
+
+    return;
+}
+
+            // 2. Pepper: Shoot seeds at range
+            if (e.type === 'pepper' && (dx === 0 || dy === 0) && dist <= 4 && dist >= 1) {
+    e.stunUntil = t + 2000;
+    fireProjectile('seed', e.gx, e.gy, Math.sign(dx), Math.sign(dy), e.atk, t);
+
+    e.lastAction = t; // ★ 追加
+
+    return;
+}
+
+            // 3. Mushroom: Plant traps
+            if (e.type === 'mushroom' && Math.random() < 0.5) {
+                if (groundTraps.length < 10) {
+                    groundTraps.push({ x: e.gx, y: e.gy, start: t });
+                    return;
+                }
+            }
+
+            // 4. Burdock: Line attack
+            if (e.type === 'burdock' && dist === 2 && (dx === 0 || dy === 0)) {
+    fireProjectile(
+        'burdock_atk',
+        e.gx,
+        e.gy,
+        Math.sign(dx),
+        Math.sign(dy),
+        e.atk,
+        t,
+        2,
+        0.003
+    );
+
+    e.stunUntil = t + 2500;
+    e.lastAction = t; // ★ 追加
+
+    return;
+}
+
+            // Default: Melee or Move
+            if (dist === 1) {
+                damagePlayer(e.atk);
+                e.lastAction = t;
+            } else if (dist < 10) {
+                moveToTarget(e, player.gx, player.gy, t);
+            }
+        }
+
+        function moveToTarget(e, tx, ty, t) {
+            let dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].sort(() => Math.random() - 0.5);
+            let best = null;
+            let minDist = 999;
+
+            for (let d of dirs) {
+                let nx = e.gx + d.x, ny = e.gy + d.y;
+                if (!isTileBlocked(nx, ny, e)) {
+                    let v = Math.abs(tx - nx) + Math.abs(ty - ny);
+                    if (v < minDist) { minDist = v; best = d; }
+                }
+            }
+            if (best) attemptMove(e, e.gx + best.x, e.gy + best.y, t);
+            else e.lastAction = t;
+        }
+
+        /**
+         * ===================================================================
+         * 7. Combat & Interaction
+         * ===================================================================
+         */
+        function handlePrimaryAction() {
+            if (isUIOpen || !player.isAlive || player.isMoving) return;
+
+            const now = performance.now();
+            if (now - lastAttackTime < ATTACK_INTERVAL) return;
+            lastAttackTime = now;
+
+            if (inventory.isMagicReady) {
+                executeMagicAttack(now);
+                return;
+            }
+
+            const tx = hitEffect.gridX;
+            const ty = hitEffect.gridY;
+            
+            const targetEnemy = activeEnemies.find(e => e.isAlive && e.gx === tx && e.gy === ty);
+            const targetChest = objectChests.find(c => !c.isOpen && c.x === tx && c.y === ty);
+            const tileContent = worldMap[ty][tx];
+
+            hitEffect.imageKey = null;
+
+            // Attack Enemy
+            if (targetEnemy) {
+                let dmg = player.currentAtk;
+                targetEnemy.hp -= dmg;
+                addFloatingLabel("-" + dmg, tx, ty, "#ff5500");
+                if (targetEnemy.hp <= 0) handleEnemyDeath(targetEnemy);
+                
+                hitEffect.imageKey = inventory.weaponId;
+                hitEffect.isActive = true;
+            } 
+            // Break Rock
+            else if (tileContent === 1) {
+                if (inventory.hasPickel) {
+                    worldMap[ty][tx] = 0;
+                    hitEffect.imageKey = 'pickel';
+                    hitEffect.isActive = true;
+                    logMessage("Player:岩を砕いたぞ！");
+                } else {
+                    logMessage("Player:岩を壊すにはつるはしが必要だ。");
+                }
+            }
+            // Open Chest
+            else if (targetChest) {
+                targetChest.isOpen = true;
+                let gain = 5 + Math.floor(Math.random() * 5);
+                inventory.bronze += gain;
+                addFloatingLabel("+" + gain + "B", tx, ty, "#ffd700");
+                updateUI();
+            }
+            // Enter Shop
+            else if (tileContent === 3) {
+                openShopUI(tx);
+            }
+
+            hitEffect.startTime = now;
+            setTimeout(() => { hitEffect.isActive = false; }, 180);
+        }
+
+        function handleEnemyDeath(e) {
+            e.isAlive = false;
+            let b = { 'eggplant': 3, 'onion': 5, 'pepper': 4, 'tomato': 8, 'mushroom': 6, 'chili': 12, 'burdock': 7 }[e.type];
+            inventory.bronze += b;
+            
+            // Silver chance
+            if (e.type === 'tomato' && Math.random() < 0.2) inventory.silver++;
+            if (e.type === 'chili' && Math.random() < 0.4) inventory.silver++;
+            
+            updateUI();
+        }
+
+        function damagePlayer(val) {
+            if (val <= 0) return;
+            player.hp = Math.max(0, player.hp - val);
+            addFloatingLabel("-" + val, player.gx, player.gy, "#f00");
+            updateUI();
+            
+            if (player.hp <= 0) {
+                player.isAlive = false;
+                document.getElementById('death-overlay').style.display = 'flex';
+            }
+        }
+
+        /**
+         * ===================================================================
+         * 8. Projectiles & Traps
+         * ===================================================================
+         */
+        function fireProjectile(type, x, y, vx, vy, atk, t, limit = 5, speed = 0.0025) {
+            activeProjectiles.push({
+                type, x, y, rx: x, ry: y, vx, vy, atk, start: t, limit, speed
+            });
+        }
+
+        function processProjectiles(t) {
+            for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+                let p = activeProjectiles[i];
+                let elapsed = t - p.start;
+
+                if (p.type === 'lightning') {
+                    if (elapsed > 500) activeProjectiles.splice(i, 1);
+                    continue;
+                }
+
+                p.rx = p.x + p.vx * (elapsed * p.speed);
+                p.ry = p.y + p.vy * (elapsed * p.speed);
+
+                // Collision with player
+                let distToP = Math.sqrt((p.rx - player.rx)**2 + (p.ry - player.ry)**2);
+                if (distToP < 0.45) {
+                    damagePlayer(p.atk);
+                    activeProjectiles.splice(i, 1);
+                    continue;
+                }
+
+                // Range limit
+                if (Math.abs(p.rx - p.x) > p.limit || Math.abs(p.ry - p.y) > p.limit || elapsed > 4000) {
+                    activeProjectiles.splice(i, 1);
+                }
+            }
+        }
+
+        function processTraps(t) {
+            for (let i = groundTraps.length - 1; i >= 0; i--) {
+                let tr = groundTraps[i];
+                if (t - tr.start > 8000) { groundTraps.splice(i, 1); continue; }
+                
+                if (player.gx === tr.x && player.gy === tr.y) {
+                    poisonTimer = 300; // frames
+                    groundTraps.splice(i, 1);
+                    logMessage("毒キノコに触れた！");
+                }
+            }
+        }
+
+        function processEnvironment(t) {
+            if (poisonTimer > 0) {
+                poisonTimer--;
+                fxLayer.style.background = `rgba(0, 180, 50, ${0.1 + Math.sin(t/100)*0.1})`;
+            } else {
+                fxLayer.style.background = 'none';
+            }
+
+            if (t - lastSpawnTime > SPAWN_INTERVAL) {
+                performSpawnCycle();
+                lastSpawnTime = t;
+            }
+        }
+
+        function processAutoActions(t) {
+            // Update aiming cursor grid
+            let dx = cursorX - (VIEW_SIZE/2);
+            let dy = cursorY - (VIEW_SIZE/2);
+            let vx, vy;
+            
+            if (Math.abs(dx) > Math.abs(dy)) {
+                vx = dx > 0 ? 1 : -1; vy = 0;
+            } else {
+                vy = dy > 0 ? 1 : -1; vx = 0;
+            }
+            
+            hitEffect.vectorX = vx;
+            hitEffect.vectorY = vy;
+            hitEffect.gridX = player.gx + vx;
+            hitEffect.gridY = player.gy + vy;
+            
+            magicTarget.gx = player.gx + vx * 3;
+            magicTarget.gy = player.gy + vy * 3;
+
+            if (inventory.hasThunderAura) {
+    if (t - inventory.lastThunderTime >= 5000) {
+        inventory.lastThunderTime = t;
+
+        const dmg = Math.max(1, player.currentAtk - 2);
+
+        activeEnemies.forEach(e => {
+            if (!e.isAlive) return;
+
+            const dx = Math.abs(e.gx - player.gx);
+const dy = Math.abs(e.gy - player.gy);
+
+if (dx <= 1 && dy <= 1) {
+    e.hp -= dmg;
+    addFloatingLabel("-" + dmg, e.gx, e.gy, "#7cf");
+
+    activeProjectiles.push({
+        type: 'lightning',
+        x: e.gx,
+        y: e.gy,
+        rx: e.gx,
+        ry: e.gy,
+        start: t
+    });
+
+    if (e.hp <= 0) {
+        handleEnemyDeath(e);
+    }
+}
+
+        });
+    }
+}
+        }
+
+        /**
+         * ===================================================================
+         * 9. UI & Shop Systems
+         * ===================================================================
+         */
+        function updateUI() {
+            document.getElementById('hp-cur').innerText = player.hp;
+            document.getElementById('hp-max').innerText = player.maxHp;
+            document.getElementById('hp-bar-inner').style.width = (player.hp / player.maxHp * 100) + "%";
+            document.getElementById('val-bronze').innerText = inventory.bronze;
+            document.getElementById('val-silver').innerText = inventory.silver;
+        }
+
+        function logMessage(txt) {
+            msgLog.innerText = txt;
+        }
+
+        function addFloatingLabel(text, x, y, color) {
+            floatingLabels.push({ text, x, y, start: performance.now(), color });
+        }
+
+        function openShopUI(shopGridX) {
+    isUIOpen = true;
+
+    const modal = document.getElementById('shop-modal');
+    const container = document.getElementById('shop-items');
+    const title = document.getElementById('shop-name');
+
+    container.innerHTML = "";
+
+    let isAdvanced = shopGridX > 15;
+    title.innerText = isAdvanced ? "首都の大売出し" : "旅の露店";
+
+    modal.style.display = 'flex';
+
+    let catalogue = [
+        { id: 'potion', name: 'ポーション', b: 15, s: 0, desc: 'HPを4回復' }
+    ];
+
+    if (!isAdvanced) {
+        if (inventory.weaponId === 'sw') {
+            catalogue.push({ id: 'sw2', name: '石の剣', b: 20, s: 0, desc: '攻撃力が4に強化' });
+        }
+    } else {
+    if (inventory.weaponId === 'sw2') {
+        catalogue.push({
+            id: 'sw3',
+            name: '鋼の剣',
+            b: 30,
+            s: 0,
+            desc: '攻撃力が5に強化'
+        });
+    }
+
+    // ★ ここを追加するだけ
+    if (inventory.weaponId === 'sw3') {
+        catalogue.push({
+            id: 'sw4',
+            name: '鉄の剣',
+            b: 50,
+            s: 0,
+            desc: '攻撃力が6に強化'
+        });
+    }
+
+    if (!inventory.hasPickel) {
+        catalogue.push({
+            id: 'pickel',
+            name: 'つるはし',
+            b: 0,
+            s: 3,
+            desc: '岩を壊せる'
+        });
+    }
+
+    if (!inventory.hasThunderAura) {
+        catalogue.push({
+            id: 'thunderAura',
+            name: '雷の術（常時）',
+            b: 0,
+            s: 4,
+            desc: '5秒毎に周囲4マスへ雷を落とす'
+        });
+    }
+}
+
+    catalogue.forEach(item => {
+        const btn = document.createElement('div');
+        btn.className = 'menu-btn';
+        const priceTxt = item.s > 0 ? `銀 ${item.s}` : `銅 ${item.b}`;
+        btn.innerHTML = `<span>${item.name} <small style="color:#777">(${item.desc})</small></span><span>${priceTxt}</span>`;
+
+        btn.onclick = () => {
+            const canBuy = item.s > 0 ? inventory.silver >= item.s : inventory.bronze >= item.b;
+            if (!canBuy) {
+                logMessage("商人:貨幣のないやつは帰りな。");
+                return;
+            }
+            if (item.s > 0) inventory.silver -= item.s;
+            else inventory.bronze -= item.b;
+
+            applyPurchase(item.id);
+            openShopUI(shopGridX);
+        };
+
+        container.appendChild(btn);
+    });
+
+    if (isAdvanced) {
+        const exchange = document.createElement('div');
+        exchange.className = 'menu-btn btn-special';
+        exchange.innerHTML = `<span>銅貨の両替</span><span>銅貨50 → 銀貨1</span>`;
+        exchange.onclick = () => {
+            if (inventory.bronze >= 50) {
+                inventory.bronze -= 50;
+                inventory.silver += 1;
+                updateUI();
+                openShopUI(shopGridX);
+            } else {
+                logMessage("商人:貨幣が足りないぞ。");
+            }
+        };
+        container.appendChild(exchange);
+        if (isAdvanced && !inventory.hasThunderAura) {
+    catalogue.push({
+        id: 'thunderAura',
+        name: '雷の術（常時）',
+        b: 0,
+        s: 4,
+        desc: '5秒毎に周囲4マスへ雷を落とす'
+    });
+}
+    }
+}
+
+        function applyPurchase(id) {
+    switch(id) {
+        case 'potion':
+            inventory.potions++;
+            break;
+
+        case 'sw2':
+            inventory.weaponId = 'sw2';
+            player.currentAtk = 4;
+            break;
+
+        case 'sw3':
+            inventory.weaponId = 'sw3';
+            player.currentAtk = 5;
+            break;
+
+        case 'pickel':
+            inventory.hasPickel = true;
+            break;
+
+        case 'thunderAura':
+            inventory.hasThunderAura = true;
+            inventory.lastThunderTime = 0;
+            logMessage("雷の術を習得した！");
+            break;
+
+        case 'sw4':
+            inventory.weaponId = 'sw4';
+            player.currentAtk = 6;
+            break;
+    }
+    updateUI();
+}
+
+        function openBagUI() {
+            isUIOpen = true;
+            const container = document.getElementById('bag-items');
+            container.innerHTML = "";
+
+            if (inventory.potions > 0) {
+                let b = document.createElement('div');
+                b.className = 'menu-btn';
+                b.innerHTML = `<span>ポーション (${inventory.potions})</span> <span>使用する</span>`;
+                b.onclick = () => {
+                    if (player.hp < player.maxHp) {
+                        inventory.potions--;
+                        player.hp = Math.min(player.maxHp, player.hp + 5);
+                        updateUI(); openBagUI();
+                    }
+                };
+                container.appendChild(b);
+            }
+
+            
+
+            if (container.innerHTML === "") container.innerHTML = "<div style='text-align:center; padding:20px; color:#555;'>Empty</div>";
+            document.getElementById('bag-modal').style.display = 'flex';
+        }
+
+        function closeAllUI() {
+            isUIOpen = false;
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        }
+
+        function executeMagicAttack(t) {
+            if (inventory.scrolls <= 0) { inventory.isMagicReady = false; return; }
+            
+            const tx = magicTarget.gx;
+            const ty = magicTarget.gy;
+            
+            activeProjectiles.push({ type: 'lightning', x: tx, y: ty, rx: tx, ry: ty, start: t });
+            
+            const e = activeEnemies.find(en => en.isAlive && en.gx === tx && en.gy === ty);
+            if (e) {
+                e.hp -= 10;
+                addFloatingLabel("-10", tx, ty, "#ff0");
+                if (e.hp <= 0) handleEnemyDeath(e);
+            }
+            
+            inventory.scrolls--;
+            if (inventory.scrolls <= 0) inventory.isMagicReady = false;
+            updateUI();
+        }
+
+        /**
+         * ===================================================================
+         * 10. Rendering Engine
+         * ===================================================================
+         */
+        function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+
+    // ===== マップ未ロード時の安全処理 =====
+    if (!worldMap || worldMap.length === 0 || !worldMap[0]) {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+        return;
+    }
+
+    // Camera follow
+    const camX = Math.floor(
+        -(player.rx * TILE_SIZE) + (VIEW_SIZE / 2 - TILE_SIZE / 2)
+    );
+    const camY = Math.floor(
+        -(player.ry * TILE_SIZE) + (VIEW_SIZE / 2 - TILE_SIZE / 2)
+    );
+    ctx.translate(camX, camY);
+
+    // Draw Map
+    for (let y = 0; y < worldMap.length; y++) {
+        for (let x = 0; x < worldMap[y].length; x++) {
+            ctx.drawImage(
+                imageLib[worldMap[y][x]],
+                x * TILE_SIZE,
+                y * TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE
+            );
+        }
+    }
+
+
+            // 2. Traps & Chests
+            groundTraps.forEach(tr => {
+                ctx.drawImage(imageLib['mushroom_trap'], tr.x * TILE_SIZE + 32, tr.y * TILE_SIZE + 32, 64, 64);
+            });
+            objectChests.forEach(c => {
+                if (!c.isOpen) ctx.drawImage(imageLib['chest'], c.x * TILE_SIZE, c.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            });
+
+            // 3. Enemies
+            activeEnemies.forEach(e => {
+    if (!e.isAlive) return;
+
+    ctx.drawImage(
+        imageLib[e.type],
+        e.rx * TILE_SIZE,
+        e.ry * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+    );
+
+    const barX = e.rx * TILE_SIZE + 20;
+    const barW = TILE_SIZE - 40;
+
+    // HP BAR
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(barX, e.ry * TILE_SIZE + 10, barW, 6);
+
+    ctx.fillStyle = (e.type === 'tomato') ? "#0f0" : "#f00";
+    ctx.fillRect(
+        barX,
+        e.ry * TILE_SIZE + 10,
+        barW * (e.hp / e.maxHp),
+        6
+    );
+
+    // ACTION GAUGE
+    const now = performance.now();
+    let progress = (now - e.lastAction) / e.actionCd;
+    progress = Math.max(0, Math.min(progress, 1));
+
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(barX, e.ry * TILE_SIZE + 18, barW, 4);
+
+    ctx.fillStyle = "#4fc3ff";
+    ctx.fillRect(
+        barX,
+        e.ry * TILE_SIZE + 18,
+        barW * progress,
+        4
+    );
+});
+
+            // 4. Projectiles
+            activeProjectiles.forEach(p => {
+                ctx.save();
+                ctx.translate(p.rx * TILE_SIZE + TILE_SIZE/2, p.ry * TILE_SIZE + TILE_SIZE/2);
+                if (p.type === 'burdock_atk') ctx.rotate(Math.atan2(p.vy, p.vx));
+                let sz = p.type === 'lightning' ? TILE_SIZE : 64;
+                ctx.drawImage(imageLib[p.type], -sz/2, -sz/2, sz, sz);
+                ctx.restore();
+            });
+
+            // 5. Player
+            if (player.isAlive) {
+                ctx.drawImage(imageLib['player'], player.rx * TILE_SIZE + 10, player.ry * TILE_SIZE + 10, TILE_SIZE - 20, TILE_SIZE - 20);
+            }
+
+            // 6. UI Overlays (Aiming)
+            ctx.globalAlpha = 1.0;
+            if (inventory.isMagicReady) {
+                ctx.drawImage(imageLib['target_magic'], magicTarget.gx * TILE_SIZE, magicTarget.gy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            } else {
+                ctx.drawImage(imageLib['target_normal'], hitEffect.gridX * TILE_SIZE, hitEffect.gridY * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            }
+            ctx.globalAlpha = 1.0;
+
+            // 7. Hit Effects
+            if (hitEffect.isActive && hitEffect.imageKey) {
+                ctx.save();
+                ctx.translate(hitEffect.gridX * TILE_SIZE + TILE_SIZE/2, hitEffect.gridY * TILE_SIZE + TILE_SIZE/2);
+                ctx.rotate(Math.atan2(hitEffect.vectorY, hitEffect.vectorX) + Math.PI/2);
+                ctx.drawImage(imageLib[hitEffect.imageKey], -TILE_SIZE/2, -TILE_SIZE/2, TILE_SIZE, TILE_SIZE);
+                ctx.restore();
+            }
+
+            // 8. Damage Labels
+            floatingLabels.forEach(lbl => {
+                let age = (performance.now() - lbl.start) / 1000;
+                ctx.fillStyle = lbl.color;
+                ctx.font = "bold 40px Arial";
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = "#000";
+                ctx.fillText(lbl.text, lbl.x * TILE_SIZE + 30, lbl.y * TILE_SIZE + 40 - (age * 80));
+                ctx.shadowBlur = 0;
+            });
+
+            ctx.restore();
+        }
+
+        /**
+         * ===================================================================
+         * 11. Event Listeners
+         * ===================================================================
+         */
+        window.addEventListener('keydown', e => {
+            inputKeys[e.key.toLowerCase()] = true;
+            if (e.key.toLowerCase() === 'e') {
+                if (isUIOpen) closeAllUI(); else openBagUI();
+            }
+            if (e.key === 'Escape') closeAllUI();
+        });
+
+        window.addEventListener('keyup', e => {
+            inputKeys[e.key.toLowerCase()] = false;
+        });
+
+        window.addEventListener('mousemove', e => {
+            const rect = canvas.parentNode.getBoundingClientRect();
+            cursorX = e.clientX - rect.left;
+            cursorY = e.clientY - rect.top;
+        });
+
+        window.addEventListener('keydown', e => {
+    if (e.code === 'Space') {
+        e.preventDefault(); // スクロール防止
+        handlePrimaryAction();
+    }
+});
+
+
+        window.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Launch
+        boot();
+
+    </script>
+</body>
+</html>
